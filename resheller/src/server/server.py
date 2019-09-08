@@ -3,8 +3,8 @@ from socket import (socket, AF_INET, SOCK_STREAM, SOL_SOCKET, SO_REUSEADDR,
                     SOCK_DGRAM)
 from threading import Thread
 
-from src.stdout.color import Color
 from src.server.shell import Shell
+from src.stdout.color import Color
 from src.stdout.title import Title
 
 
@@ -45,13 +45,14 @@ class Server(Title):
             prompt = f"Session {str(count)}. <---> {str(ip)}"
             print(Color(prompt).grn())
             count += 1
+        print()
 
     def start_session(self, command):
         try:
             sessions = (int(command[8:]) - 1)
             command = Shell(self.ips, self.targets, sessions)
             command.shell()
-        except (IndexError, ValueError):
+        except (IndexError, ValueError, OSError):
             prompt = "[!] No Session Matches That Selection\n"
             print(Color(prompt).b_red())
 

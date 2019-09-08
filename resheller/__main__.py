@@ -6,8 +6,8 @@ __version__ = "2019.09"
 __maintainer__ = "Stephen Whitlock"
 __email__ = "stephen@jshwisolutions.com"
 __status__ = "Production"
-from src.stdout.title import Title
 from src.server.server import Server
+from src.stdout.title import Title
 
 
 def main():
