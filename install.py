@@ -32,7 +32,7 @@ class Make:
                        f"\n    return {ip}\n")
             file.close()
 
-    def install_requirements(self):
+    def install_requirements(self, uninstall=False):
         requirements = path.join(self.repo, "requirements.txt")
         with open(requirements, "r") as reqs:
             lines = reqs.readlines()
@@ -41,10 +41,13 @@ class Make:
             line = line[:-1]
             line = line.split("=")
             line = line[0]
-            if not importlib.util.find_spec(line):
-                call([sys.executable, "-m", "pip", "install", line])
-        prompt = f"{self.tab}Package requirements satisfied\n"
-        print(Color(prompt).ylw())
+            if not uninstall:
+                if not importlib.util.find_spec(line):
+                    call([sys.executable, "-m", "pip", "install", line])
+            else:
+                if importlib.util.find_spec(line):
+                    call([sys.executable, "-m", "pip", "uninstall",
+                          "--yes", line])
 
     def make_config(self):
         def_ini = path.join(self.package, "lib", 'default.ini')
@@ -80,12 +83,18 @@ class Make:
             print(Color(f"{self.tab}Resheller already installed").ylw())
             print("\nHint: Run install.py -r to reinstall")
         else:
-            call(["pyinstaller", "--onefile", "--noconsole", client_py])
+            call([
+                "pyinstaller",
+                "--onefile",
+                # "--noconsole",
+                client_py
+            ])
 
     def install(self):
         print(Color("[Installing]").b_grn())
         print(Color("Installing package requirements:").grn())
         self.install_requirements()
+        print(f"{self.tab}Package requirements satisfied\n")
         self.make_config()
         self.get_ip()
         print(Color("Installing package").grn())
@@ -127,17 +136,19 @@ class Make:
 
     def clean(self):
         print(Color("[Cleaning]").b_grn())
+        print(Color("Removing package requirements:").grn())
+        self.install_requirements(uninstall=True)
+        print(Color(f"{self.tab}Package requirements removed\n").ylw())
         print(Color("Removing:").grn())
         self.rm_dirs()
         self.rm_ini()
         self.rm_specs()
         self.punctuate()
         if self.items:
-            prompt = self.get_result()
             print(Color("Removed:").grn())
-            print(Color(self.tab + prompt).ylw())
+            print(Color(self.tab + self.get_result()).ylw())
         else:
-            print(Color("Nothing to Remove").ylw())
+            print(Color(f"{self.tab}Nothing to Remove").ylw())
         self.write_ip_file()
 
     def reinstall(self):

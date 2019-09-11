@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+from src.server.server import Server
+from src.stdout.title import Title
 __author__ = "Stephen Whitlock"
 __copyright__ = "Copyright 2019, Jshwi Solutions"
 __license__ = "MIT"
@@ -6,8 +8,6 @@ __version__ = "2019.09"
 __maintainer__ = "Stephen Whitlock"
 __email__ = "stephen@jshwisolutions.com"
 __status__ = "Production"
-from src.server.server import Server
-from src.stdout.title import Title
 
 
 def main():

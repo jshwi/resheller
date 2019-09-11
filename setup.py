@@ -27,6 +27,7 @@ setup(
         "mss==4.0.3",
         "pynput==1.4.2",
         "requests==2.22.0",
-        "PyInstaller==3.5"
+        "PyInstaller==3.5",
+        "pip-autoremove==0.9.1"
     ]
 )

