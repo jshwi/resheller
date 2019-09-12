@@ -16,7 +16,7 @@ class Shell:
         self.target = targets[sessions]
         self.ip, _ = ips[sessions]
         self.time = strftime("%H.%M.%S")
-        self.windows = self.get_os
+        self.windows = self.get_os()
 
     @staticmethod
     def make_dir(command):
@@ -82,63 +82,57 @@ class Shell:
             stdout = Color(f"{stdout}\n").b_red()
         print(stdout)
 
-    def get_path(self):
-        slash = "/"
-        self.safe_send("pwd")
-        stdout = self.safe_recv()
-        dir_list = stdout.split(slash)
-        del dir_list[0]
-        dir_list[-1] = dir_list[-1][:-1]
-        if not len(dir_list):
-            return slash
-        dir_list[0] = "~"
-        if len(dir_list) == 1:
-            return f"{dir_list[0]}{slash}"
-        simplified = path.join(dir_list[0], dir_list[1])
-        if len(dir_list) == 2:
-            return simplified
-        if len(dir_list) >= 3:
-            tilde = dir_list.pop(0)
-            usr = dir_list.pop(0)
-            simplified = path.join(tilde, usr)
-            basename = dir_list.pop(-1)
-            count = 0
-            while count < len(dir_list):
-                simplified = path.join(simplified, "..")
-                count += 1
-            return path.join(simplified, basename)
+    def adaptable_path_join(self, *args):
+        if self.windows:
+            return path.join(*args).replace("/", "\\")
+        else:
+            return path.join(*args)
 
     def get_win_path(self):
-        self.safe_send("cd")
+        root = False
+        request = "pwd"
+        slash = "/"
+        del_list = 3
+        chop = 1
+        if self.windows:
+            request = "cd"
+            slash = "\\"
+            chop = 2
+        self.safe_send(request)
         stdout = self.safe_recv()
-        dir_list = stdout.split("\\")
-        dir_list[-1] = dir_list[-1][:-2]
-        dir_list[0] = "\\"
+        dir_list = stdout.split(slash)
+        dir_list[-1] = dir_list[-1][:-chop]
+        if dir_list[1] == "root":
+            root = True
+            del_list = 2
+        dir_list[0] = slash
         if len(dir_list) == 1:
             return dir_list[0]
         if len(dir_list) == 2:
+            if root:
+                return f"~{dir_list[0]}"
             return f"{dir_list[0]}{dir_list[1]}"
         if len(dir_list) == 3:
-            return path.join("~", dir_list[2]).replace("/", "\\")
-        if len(dir_list) >= 3:
+            if root:
+                return self.adaptable_path_join("~", dir_list[2])
+            return f"~{dir_list[0]}"
+        if len(dir_list) > 3:
             basename = dir_list.pop(-1)
-            del dir_list[0:3]
+            del dir_list[0:del_list]
             simplified = "~"
             count = 0
             while count < len(dir_list):
-                simplified = path.join(simplified, "..").replace("/", "\\")
+                simplified = self.adaptable_path_join(simplified, "..")
                 count += 1
-            return path.join(simplified, basename).replace("/", "\\")
+            return self.adaptable_path_join(simplified, basename)
 
     def get_os(self):
         self.safe_send("get_os")
-        return self.safe_recv()
+        recv_os = self.safe_recv()
+        return recv_os
 
     def ps1(self):
-        if self.windows:
-            win_path = self.get_win_path()
-        else:
-            win_path = self.get_path()
+        win_path = self.get_win_path()
         shell = (f'{Color("{").b_blu()}{Color("shell").b_red()}'
                  f'{Color("@").b_blu()}{Color(self.ip).b_red()}:'
                  f'{Color(win_path).b_grn()}{Color("}>").b_blu()} ')
@@ -147,9 +141,7 @@ class Shell:
     @staticmethod
     def help():
         help_options = (
-            "\n"
-            "Usage:"
-            "\n"
+            "Usage:\n"
             "help            --> print this help message\n"
             "download <path> --> download file from target\n"
             "upload <path>   --> upload file from target\n"

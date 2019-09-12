@@ -86,7 +86,7 @@ class Make:
             call([
                 "pyinstaller",
                 "--onefile",
-                # "--noconsole",
+                "--noconsole",
                 client_py
             ])
 
