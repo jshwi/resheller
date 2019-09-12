@@ -78,7 +78,7 @@ class Server(Title):
             elif command == "exit":
                 self.exit_control()
             else:
-                usage = ("[*] Usage:\n\n"
+                usage = ("[*] usage:\n\n"
                          "targets          --> view available targets\n"
                          "session <number> --> select target by index\n")
                 print(Color(usage).ylw())

