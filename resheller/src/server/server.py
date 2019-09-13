@@ -1,11 +1,12 @@
 #!/usr/bin/env python3
-from socket import (socket, AF_INET, SOCK_STREAM, SOL_SOCKET, SO_REUSEADDR,
-                    SOCK_DGRAM)
+from socket import AF_INET, SOCK_STREAM, SOL_SOCKET, SO_REUSEADDR, SOCK_DGRAM
+from socket import socket
 from threading import Thread
 
 from src.server.shell import Shell
 from src.stdout.color import Color
 from src.stdout.title import Title
+from src.stdout.output import usage
 
 
 class Server(Title):
@@ -18,16 +19,11 @@ class Server(Title):
         self.clients = 0
         self.stop_threads = False
 
-    @staticmethod
-    def get_ip():
+    def sock_object(self):
         sock = socket(AF_INET, SOCK_DGRAM)
         sock.connect(("8.8.8.8", 80))
         ip = sock.getsockname()[0]
         sock.close()
-        return ip
-
-    def sock_object(self):
-        ip = self.get_ip()
         try:
             self.sock.setsockopt(SOL_SOCKET, SO_REUSEADDR, 1)
             self.sock.bind((ip, 54321))
@@ -78,10 +74,7 @@ class Server(Title):
             elif command == "exit":
                 self.exit_control()
             else:
-                usage = ("[*] usage:\n\n"
-                         "targets          --> view available targets\n"
-                         "session <number> --> select target by index\n")
-                print(Color(usage).ylw())
+                print(Color(usage(session=True)).ylw())
 
     def server(self):
         while True:

