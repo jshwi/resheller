@@ -17,7 +17,7 @@ class Title:
             clear = "cls"
         call(clear, shell=True)
 
-    def title(self):
+    def resheller(self):
         print(Color(f"          , .  ^  . ,    ").b_blu())
         print(Color(f"      .++._,_.,+,._,_.++.").b_blu())
         print(f"     {self.icon}{Color('RESHELLER').b_red()}{self.icon}")

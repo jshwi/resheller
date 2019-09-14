@@ -17,3 +17,4 @@
 **/.hypothesis/
 **/*.pyc
 **/client.spec
+**/resheller/src/client/ip.py

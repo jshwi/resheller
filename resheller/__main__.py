@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 from src.server.server import Server
 from src.stdout.title import Title
+
 __author__ = "Stephen Whitlock"
 __copyright__ = "Copyright 2019, Jshwi Solutions"
 __license__ = "MIT"
@@ -14,7 +15,7 @@ def main():
     title = Title()
     server = Server()
     title.clear_screen()
-    title.title()
+    title.resheller()
     server.sock_object()
     server.thread()
     title.header()

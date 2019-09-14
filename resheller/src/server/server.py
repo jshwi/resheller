@@ -3,16 +3,15 @@ from socket import AF_INET, SOCK_STREAM, SOL_SOCKET, SO_REUSEADDR, SOCK_DGRAM
 from socket import socket
 from threading import Thread
 
-from src.server.shell import Shell
+from src.shell.shell import Shell
 from src.stdout.color import Color
-from src.stdout.title import Title
 from src.stdout.output import usage
+from src.stdout.title import Title
 
 
-class Server(Title):
+class Server:
 
     def __init__(self):
-        super().__init__()
         self.sock = socket(AF_INET, SOCK_STREAM)
         self.ips = []
         self.targets = []
@@ -43,11 +42,12 @@ class Server(Title):
             count += 1
         print()
 
-    def start_session(self, command):
+    def start_session(self, cmd):
         try:
-            sessions = (int(command[8:]) - 1)
-            command = Shell(self.ips, self.targets, sessions)
-            command.shell()
+            sessions = (int(cmd[8:]) - 1)
+            print(Color("[+] Connection Established\n").b_grn())
+            cmd = Shell(self.ips, self.targets, sessions)
+            cmd.shell()
         except (IndexError, ValueError, OSError):
             prompt = "[!] No Session Matches That Selection\n"
             print(Color(prompt).b_red())
@@ -60,18 +60,18 @@ class Server(Title):
 
     def control_centre(self):
         while True:
-            command = input(f"{self.icon} ")
-            if (command[:7] in ("targets", "command")
+            cmd = input(f"{Title().icon} ")
+            if (cmd[:7] in ("targets", "command")
                     and (not self.targets or not self.ips)):
                 print(Color("[!] No Targets Found.").b_red())
                 print(Color("[*] Is a Reverse Shell Running?\n").ylw())
                 continue
-            if command == "targets":
+            if cmd == "targets":
                 self.show_targets()
-            elif command[:7] == "session":
-                self.start_session(command)
+            elif cmd[:7] == "session":
+                self.start_session(cmd)
                 continue
-            elif command == "exit":
+            elif cmd == "exit":
                 self.exit_control()
             else:
                 print(Color(usage(session=True)).ylw())

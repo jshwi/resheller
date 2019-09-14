@@ -3,6 +3,7 @@ from argparse import ArgumentParser
 from configparser import ConfigParser
 from glob import glob
 from importlib import util
+from ipaddress import IPv4Address
 from os import getcwd, name, path, remove
 from shutil import copyfile, rmtree
 from subprocess import Popen, PIPE, STDOUT
@@ -21,24 +22,29 @@ class Make:
         self.package = path.join(self.repo, "resheller")
         self.client_dir = path.join(self.package, "src", "client")
         self.ip_file = path.join(self.client_dir, "ip.py")
+        self.client = self.get_client()
+        self.client_exe = self.get_client_path()
 
-    def write_ip_file(self, ip='"insert ip here"'):
+    def write_ip_file(self, ip):
         with open(self.ip_file, "w") as file:
-            file.write("#!/usr/bin/env python3\ndef get_ip():"
-                       "\n    return {}\n".format(ip))
+            file.write("#!/usr/bin/env python3\n")
+            file.write("def get_ip():\n")
+            file.write("    return %s\n" % ip)
             file.close()
 
     @staticmethod
     def format_stdout(cmd, upgrade=False):
         proc = Popen(cmd, stdout=PIPE, stderr=STDOUT, encoding='utf8')
         stdout, _ = proc.communicate()
-        stdout = wrap(stdout, 75)
-        for row in stdout:
-            if "Requirement already satisfied" in row:
-                return
-            print(f"    {row}")
-            if "You are using pip version" in row:
-                upgrade = True
+        stdout = stdout.splitlines()
+        for line in stdout:
+            line = wrap(line, 75)
+            for row in line:
+                if "Requirement already satisfied" in row:
+                    return
+                print(f"    {row}")
+                if "You are using pip version" in row:
+                    upgrade = True
         return upgrade
 
     @staticmethod
@@ -78,65 +84,79 @@ class Make:
 
     def make_config(self):
         def_ini = path.join(self.package, "lib", 'default.ini')
-        if not path.isfile(self.conf_ini):
-            if not path.isfile(self.conf_ini):
-                copyfile(def_ini, self.conf_ini)
-            print(Color(f"Initiated config.ini in {self.repo}").grn())
-            prompt = "    Configure config.ini then run this again"
-            print(Color(prompt).ylw())
-            exit(0)
+        copyfile(def_ini, self.conf_ini)
+        print(Color("Initiated config.ini:").grn())
+        prompt = "    Enter target's IP in config file then run install.py"
+        print(Color(prompt).ylw())
+        exit(0)
 
     def get_ip(self):
         config = ConfigParser()
         conf_ini = path.join(getcwd(), 'config.ini')
         config.read(conf_ini)
-        ip = config["IP"]["server"]
-        if "insert ip here" in ip:
-            prompt = "Enter host IP in config file then run python3 install.py"
-            print(Color(prompt).red())
+        ipv4 = config["IP"]["server"]
+        try:
+            IPv4Address(ipv4.strip('"'))
+        except ValueError as err:
+            if "Enter target IP here" in ipv4:
+                prompt = "    Enter target's IP in the config file (config.ini)"
+                print(Color(prompt).red())
+            else:
+                print(Color(f"    Not a valid IPv4 Address:").b_red())
+                print(f"    {Color(err).ylw()}")
             exit(0)
-        self.write_ip_file(ip)
+        self.write_ip_file(ipv4)
 
-    def get_exe(self):
-        client = "client"
+    def get_client_path(self):
+        return path.join(self.repo, "dist", self.client)
+
+    @staticmethod
+    def get_client():
         if name == "nt":
-            client = "client.exe"
-        return path.join(self.repo, "dist", client)
+            return "client.exe"
+        return "client"
 
     def make_exe(self):
         client_py = path.join(self.client_dir, "client.py")
-        client_exe = self.get_exe()
-        if path.isfile(client_exe):
+        if path.isfile(self.client_exe):
             print(Color("    Resheller already installed").ylw())
             print()
             print("Hint: Run install.py -r to reinstall")
         else:
             cmd = ["pyinstaller", "--onefile", "--noconsole", client_py]
             self.format_stdout(cmd)
-            print(Color("    Installation Successful").ylw())
+            print(Color("    Installation Successful\n").ylw())
+            print(Color(f"Find {self.client} in ./dist").grn())
 
-    def install(self):
+    def install(self, requirements=True):
         print(Color("[Install]").b_grn())
-        print(Color("Installing package requirements:").grn())
-        executed = self.install_requirements()
-        if executed:
-            prompt = "    Package requirements satisfied\n"
-        else:
-            prompt = "    Packages requirements already installed\n"
-        print(Color(prompt).ylw())
-        self.make_config()
+        if not path.isfile(self.conf_ini):
+            if requirements:
+                print(Color("Installing package requirements:").grn())
+                executed = self.install_requirements()
+                if executed:
+                    prompt = "    Package requirements satisfied\n"
+                else:
+                    prompt = "    Packages requirements already installed\n"
+                print(Color(prompt).ylw())
+            self.make_config()
         self.get_ip()
-        print(Color("Installing package").grn())
+        print(Color("Installing package:").grn())
         self.make_exe()
 
-    @staticmethod
-    def rm_dirs():
+    def rm_dirs(self):
         items = []
         for i in ["build", "dist"]:
             if path.isdir(i):
-                rmtree(i)
-                print(f"    {Color(path.basename(i)).ylw()}")
-                items.append(path.basename(i))
+                try:
+                    rmtree(i)
+                    print(f"    {Color(path.basename(i)).ylw()}")
+                    items.append(path.basename(i))
+                except PermissionError as err:
+                    print(Color(err).b_red())
+                    print(f'Hint: Try looking for "{self.client}" '
+                          f'in your running processes')
+                    exit(0)
         return items
 
     def rm_ini(self, items):
@@ -171,35 +191,40 @@ class Make:
             items.insert((length - 1), "and")
         return items
 
-    def clean(self):
+    def clean(self, requirements=True):
         print(Color("[Clean]").b_grn())
-        print(Color("Removing package requirements:").grn())
-        executed = self.install_requirements(uninstall=True)
-        if executed:
-            print(Color("    Package requirements removed\n").ylw())
-        else:
-            print(Color("    No requirements to uninstall\n").ylw())
+        if requirements:
+            print(Color("Removing package requirements:").grn())
+            executed = self.install_requirements(uninstall=True)
+            if executed:
+                print(Color("    Package requirements removed\n").ylw())
+            else:
+                print(Color("    No requirements to uninstall\n").ylw())
         print(Color("Removing:").grn())
         items = self.rm_dirs()
         items = self.rm_ini(items)
         items = self.rm_specs(items)
         items = self.punctuate(items)
+        print()
         if items:
             print(Color("Removed:").grn())
             print(f"    {Color(self.get_result(items)).ylw()}")
         else:
             print(Color("    Nothing to Remove").ylw())
-        self.write_ip_file()
+        self.write_ip_file('"Enter target IP here"')
 
     def reinstall(self):
-        client_exe = self.get_exe()
         print(Color("[Reinstall]").b_grn())
-        print(Color("Reinstalling:").grn())
-        if path.isfile(client_exe):
+        print(Color("Running reinstall:").grn())
+        if path.isfile(self.conf_ini):
             print()
-            self.clean()
+            self.clean(requirements=False)
             print()
-            self.install()
+            if path.isfile(self.client_exe):
+                requirements = False
+            else:
+                requirements = True
+            self.install(requirements)
         else:
             print(Color("    Package is not installed").ylw())
 
