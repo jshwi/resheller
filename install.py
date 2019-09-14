@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+import sys
 from argparse import ArgumentParser
 from configparser import ConfigParser
 from glob import glob
@@ -7,7 +8,6 @@ from ipaddress import IPv4Address
 from os import getcwd, name, path, remove
 from shutil import copyfile, rmtree
 from subprocess import Popen, PIPE, STDOUT
-from sys import executable
 from textwrap import wrap
 
 from resheller.src.stdout.color import Color
@@ -49,7 +49,7 @@ class Make:
 
     @staticmethod
     def pip_exe(*args):
-        cmd = [executable, "-m", "pip"]
+        cmd = [sys.executable, "-m", "pip"]
         for arg in args:
             cmd.append(arg)
         return cmd
@@ -61,7 +61,7 @@ class Make:
             reqs.close()
         return lines
 
-    def install_requirements(self, uninstall=False):
+    def install_requirements(self, user, uninstall=False):
         executed = False
         requirements = self.get_requirements()
         for line in requirements:
@@ -191,11 +191,11 @@ class Make:
             items.insert((length - 1), "and")
         return items
 
-    def clean(self, requirements=True):
+    def clean(self, arg, requirements=True):
         print(Color("[Clean]").b_grn())
         if requirements:
             print(Color("Removing package requirements:").grn())
-            executed = self.install_requirements(uninstall=True)
+            executed = self.install_requirements(arg, uninstall=True)
             if executed:
                 print(Color("    Package requirements removed\n").ylw())
             else:
@@ -213,12 +213,12 @@ class Make:
             print(Color("    Nothing to Remove").ylw())
         self.write_ip_file('"Enter target IP here"')
 
-    def reinstall(self):
+    def reinstall(self, user):
         print(Color("[Reinstall]").b_grn())
         print(Color("Running reinstall:").grn())
         if path.isfile(self.conf_ini):
             print()
-            self.clean(requirements=False)
+            self.clean(user, requirements=False)
             print()
             if path.isfile(self.client_exe):
                 requirements = False
@@ -231,20 +231,44 @@ class Make:
 
 def argument_parser():
     parser = ArgumentParser()
-    parser.add_argument("-c", "--clean", action="store_true")
-    parser.add_argument("-r", "--reinstall", action="store_true")
+    parser.add_argument(
+        "-c",
+        "--clean",
+        help="Uninstall the package, remove requirements and reset the "
+             "repository to it's original state",
+        action="store_true"
+    )
+    parser.add_argument(
+        "-r",
+        "--reinstall",
+        help="Clean the repository without removing requirements and install "
+             "the package and requirements if necessary",
+        action="store_true"
+    )
+    parser.add_argument(
+        "-u",
+        "--user",
+        help="Install requirements under user privileges",
+        action="store_true"
+    )
     return parser.parse_args()
 
 
 def main():
     make = Make()
     args = argument_parser()
-    if args.clean:
-        make.clean()
-    elif args.reinstall:
-        make.reinstall()
+    if hasattr(sys, 'real_prefix'):
+        venv = True
     else:
-        make.install()
+        venv = False
+    if args.user and venv:
+        args.user = False
+    if args.reinstall:
+        make.reinstall(args.user)
+    elif args.clean:
+        make.clean(args.user)
+    else:
+        make.install(args.user)
 
 
 if __name__ == '__main__':

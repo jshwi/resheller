@@ -1,17 +1,26 @@
 # ReShellEr
 ### Reverse Shell servEr
+    Expanded upon from "Multi-functioning Reverse Shell" in 
+    "Master Ethical Hacking with Python!" by Joseph Delgadillo:
+    https://www.udemy.com/course/ethical-hacking-python/
 
 ### Prerequisites
     Python3
 
 ### Install Dependencies
-    * python3 setup.py install
-    * pip3 install -r requirements.txt
+    If you are a user of virtual environments
+    python3* install.py
+    
+    Package contains two modules:
+        1. resheller (command and control centre)
+        2. client/client.exe (Unix and Windows respectively)
+        
+    
 
 
 ## Getting Started
     * Includes two modules:
-        * bin/client.exe
+        * client.exe
         * resheller/server.py
     * Get client.exe on target Windows machine
     * Run shell commands from server.py
@@ -26,6 +35,9 @@
     keylog <opt>    --> <start> --> start keylogger on target
                         <dump>  --> retrieve logs from target
     quit            --> exit reverse shell
+
+<sup>* On windows command may simply be python when working within a 
+python3 based virtual environment</sup>
 
 ## Author
 
