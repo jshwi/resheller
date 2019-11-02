@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 from os import path
 
-from src.stdout.color import Color
+from src.stdout.colors import color
 
 
 class Ps1:
@@ -81,9 +81,9 @@ class Ps1:
     def prompt(self):
         path_ = self.get_path()
         ps1 = (
-            f'{Color("{").b_blu()}{Color(self.usr).b_red()}'
-            f'{Color("@").b_blu()}{Color(self.host).b_red()}:'
-            f'{Color(path_).b_grn()}{Color("}>").b_blu()} '
+            f'{color.b_blue.get("{")}{color.b_red.get(self.usr)}'
+            f'{color.b_blue.get("@")}{color.b_red.get(self.host)}:'
+            f'{color.b_grn.get(path_)}{color.b_blue.get("}>")} '
         )
         cmd = input(ps1)
         if cmd == "cd" and len(cmd) == 2:

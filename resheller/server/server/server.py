@@ -4,7 +4,7 @@ from socket import socket
 from threading import Thread
 
 from src.shell.shell import Shell
-from src.stdout.color import Color
+from src.stdout.colors import color
 from src.stdout.output import usage
 from src.stdout.title import Title
 
@@ -28,7 +28,7 @@ class Server:
             self.sock.bind((ip, 54321))
             self.sock.listen(5)
         except OSError as err:
-            print(Color(err).b_red())
+            color.b_red.print(err)
 
     def thread(self):
         t1 = Thread(target=self.server)
@@ -38,19 +38,19 @@ class Server:
         count = 1
         for ip in self.ips:
             prompt = f"Session {str(count)}. <---> {str(ip)}"
-            print(Color(prompt).grn())
+            color.grn.print(prompt)
             count += 1
         print()
 
     def start_session(self, cmd):
         try:
             sessions = (int(cmd[8:]) - 1)
-            print(Color("[+] Connection Established\n").b_grn())
+            color.grn.print("[+] Connection Established\n")
             cmd = Shell(self.ips, self.targets, sessions)
             cmd.shell()
         except (IndexError, ValueError, OSError):
             prompt = "[!] No Session Matches That Selection\n"
-            print(Color(prompt).b_red())
+            color.b_red.print(prompt)
 
     def exit_control(self):
         for target in self.targets:
@@ -63,8 +63,8 @@ class Server:
             cmd = input(f"{Title().icon} ")
             if (cmd[:7] in ("targets", "command")
                     and (not self.targets or not self.ips)):
-                print(Color("[!] No Targets Found.").b_red())
-                print(Color("[*] Is a Reverse Shell Running?\n").ylw())
+                color.b_red.print("[!] No Targets Found.")
+                color.ylw.print("[*] Is a Reverse Shell Running?\n")
                 continue
             if cmd == "targets":
                 self.show_targets()
@@ -74,7 +74,7 @@ class Server:
             elif cmd == "exit":
                 self.exit_control()
             else:
-                print(Color(usage(session=True)).ylw())
+                color.ylw.print(usage(session=True))
 
     def server(self):
         while True:
@@ -85,8 +85,7 @@ class Server:
                 target, ip = self.sock.accept()
                 self.targets.append(target)
                 self.ips.append(ip)
-                connect = f"\nConnected to {self.ips[self.clients]}!"
-                print(Color(connect).grn())
+                color.grn.print(f"\nConnected to {self.ips[self.clients]}!")
                 self.clients += 1
             except OSError:
                 pass

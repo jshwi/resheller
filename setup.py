@@ -9,24 +9,34 @@ with open("README.md", "r") as readme:
 
 setup(
     name='resheller',
-    version='2019.9',
-    packages=find_packages(),
+    version="1.0.0",
+    description="Reverse shell server",
+    long_description=README,
     url="https://github.com/jshwi/resheller",
+    long_description_content_type="text/markdown",
+    packages=find_packages(),
     license='MIT',
     author='Stephen Whitlock',
     author_email='stephen@jshwisolutions.com',
-    description='',
-    long_description=README,
-    long_description_content_type='text/markdown',
     classifiers=[
-        "Programming Language :: Python :: 3",
         "License :: OSI Approved :: MIT License",
-        "Operating System :: OS Independent",
+        "Programming Language :: Python",
+        "Programming Language :: Python :: 2",
+        "Programming Language :: Python :: 3",
     ],
     install_requires=[
         "mss==4.0.3",
+        "object-colors==1.0.3",
         "pynput==1.4.2",
         "requests==2.22.0",
         "PyInstaller==3.5",
-    ]
+    ],
+    include_package_data=True,
+    entry_points={
+        "console_scripts": [
+            "server=server.__main__:main",
+            "client=client.__main__:main",
+        ],
+    },
+
 )
