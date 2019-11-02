@@ -3,22 +3,20 @@ from socket import AF_INET, SOCK_STREAM, SOL_SOCKET, SO_REUSEADDR, SOCK_DGRAM
 from socket import socket
 from threading import Thread
 
+from lib.stdout import usage, color, Title
 from server.shell import Shell
-from lib.colors import color
-from lib.output import usage
-from lib.title import Title
 
 
 class Server:
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.sock = socket(AF_INET, SOCK_STREAM)
         self.ips = []
         self.targets = []
         self.clients = 0
         self.stop_threads = False
 
-    def sock_object(self):
+    def sock_object(self) -> None:
         sock = socket(AF_INET, SOCK_DGRAM)
         sock.connect(("8.8.8.8", 80))
         ip = sock.getsockname()[0]
@@ -30,11 +28,11 @@ class Server:
         except OSError as err:
             color.b_red.print(err)
 
-    def thread(self):
+    def thread(self) -> None:
         t1 = Thread(target=self.server)
         t1.start()
 
-    def show_targets(self):
+    def show_targets(self) -> None:
         count = 1
         for ip in self.ips:
             prompt = f"Session {str(count)}. <---> {str(ip)}"
@@ -42,7 +40,7 @@ class Server:
             count += 1
         print()
 
-    def start_session(self, cmd):
+    def start_session(self, cmd: str) -> None:
         try:
             sessions = (int(cmd[8:]) - 1)
             color.grn.print("[+] Connection Established\n")
@@ -52,13 +50,13 @@ class Server:
             prompt = "[!] No Session Matches That Selection\n"
             color.b_red.print(prompt)
 
-    def exit_control(self):
+    def exit_control(self) -> None:
         for target in self.targets:
             target.close()
         self.sock.close()
         self.stop_threads = True
 
-    def control_centre(self):
+    def control_centre(self) -> None:
         while True:
             cmd = input(f"{Title().icon} ")
             if (cmd[:7] in ("targets", "command")
@@ -76,7 +74,7 @@ class Server:
             else:
                 color.ylw.print(usage(session=True))
 
-    def server(self):
+    def server(self) -> None:
         while True:
             if self.stop_threads:
                 break

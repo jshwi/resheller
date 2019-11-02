@@ -1,5 +1,5 @@
 import sys
-from argparse import ArgumentParser
+from argparse import ArgumentParser, Namespace
 from configparser import ConfigParser
 from importlib import import_module
 from ipaddress import IPv4Address
@@ -10,13 +10,13 @@ from textwrap import wrap
 
 from root_finder import get_project_root
 
-from lib.colors import color
+from lib.stdout import color
 
 
 class Build:
     """Call to resolve config paths and create uninitiated configs"""
 
-    def __init__(self, user: bool):
+    def __init__(self, user: bool) -> None:
         self.user = user
         self.executed = False
         self.install = True
@@ -29,7 +29,7 @@ class Build:
         self.client_exe = path.join(self.repo, "dist", self.client)
         self.requirements = self.get_reqs()
 
-    def write_ip_file(self, ip: str):
+    def write_ip_file(self, ip: str) -> None:
         ip_file = path.join(self.client_dir, "ip.py")
         with open(ip_file, "w") as file:
             file.write("#!/usr/bin/env python3\n")
@@ -37,13 +37,13 @@ class Build:
             file.write("    return %s\n" % ip)
             file.close()
 
-    def run_pip(self, args: list):
+    def run_pip(self, args: list) -> None:
         cmd = [sys.executable, "-m", "pip"]
         for arg in args:
             cmd.append(arg)
         self.run_command(cmd)
 
-    def run_command(self, cmd: list):
+    def run_command(self, cmd: list) -> None:
         proc = Popen(cmd, stdout=PIPE, stderr=STDOUT, encoding='utf8')
         stdout, _ = proc.communicate()
         for line in stdout.splitlines():
@@ -62,7 +62,7 @@ class Build:
             reqs.close()
         return lines
 
-    def read_package_path(self):
+    def read_package_path(self) -> None:
         for line in self.requirements:
             try:
                 module = import_module(line.split("=")[0])
@@ -73,7 +73,7 @@ class Build:
             except ImportError:
                 pass
 
-    def resolve_user(self):
+    def resolve_user(self) -> None:
         if self.user and self.venv:
             color.ylw.print("    Cannot install requirements as --user")
             color.ylw.print("    Virtual environment is active")
@@ -86,7 +86,7 @@ class Build:
             return
         self.user = False
 
-    def manage_requirements(self):
+    def manage_requirements(self) -> None:
         if self.user:
             self.resolve_user()
         for line in self.requirements:
@@ -98,14 +98,14 @@ class Build:
                 args = ["uninstall", "--yes", line]
             self.run_pip(args)
 
-    def make_config(self):
+    def make_config(self) -> None:
         def_ini = path.join(self.package, "lib", 'default.ini')
         copyfile(def_ini, self.conf_ini)
         color.grn.print("Initiated config.ini:")
         color.ylw.print("    Enter target's IP in config then run build.py")
         exit(0)
 
-    def get_ip(self):
+    def get_ip(self) -> None:
         config = ConfigParser()
         conf_ini = path.join(getcwd(), 'config.ini')
         config.read(conf_ini)
@@ -122,7 +122,7 @@ class Build:
             exit(0)
         self.write_ip_file(ipv4)
 
-    def make_exe(self):
+    def make_exe(self) -> None:
         client_py = path.join(self.client_dir, "client.py")
         if path.isfile(self.client_exe):
             color.ylw.print("    Resheller already installed\n")
@@ -134,7 +134,7 @@ class Build:
             print()
             color.ylw.print(f"Find {self.client} in ./dist")
 
-    def install_requirements(self, install_reqs=True):
+    def install_requirements(self, install_reqs: bool = True) -> None:
         color.b_grn.print("[Install]")
         if not path.isfile(self.conf_ini):
             if install_reqs:
@@ -149,7 +149,7 @@ class Build:
         color.grn.print("Installing package:")
         self.make_exe()
 
-    def rm_build(self):
+    def rm_build(self) -> list:
         items = []
         for item in ["build", "dist", self.conf_ini, "client.spec"]:
             try:
@@ -171,7 +171,7 @@ class Build:
             items.insert(len(items[:-1]), "and")
         return items
 
-    def clean(self, install_reqs=True):
+    def clean(self, install_reqs: bool = True) -> None:
         self.install = False
         color.grn.print("[Clean]")
         if install_reqs:
@@ -193,7 +193,7 @@ class Build:
             color.ylw.print("    Nothing to Remove")
         self.write_ip_file('"Enter target IP here"')
 
-    def reinstall(self):
+    def reinstall(self) -> None:
         install_reqs = True
         color.b_grn.print("[Reinstall]")
         color.grn.print("Running reinstall:")
@@ -210,7 +210,7 @@ class Build:
             color.ylw.print("    Package is not installed")
 
 
-def argument_parser():
+def argument_parser() -> Namespace:
     parser = ArgumentParser()
     parser.add_argument(
         "build",
@@ -244,14 +244,14 @@ def argument_parser():
     return parser.parse_args()
 
 
-def usage():
+def usage() -> None:
     parser = ArgumentParser()
     parser.add_argument("--usage")
     parser.parse_args()
     print(parser.print_help())
 
 
-def main():
+def main() -> None:
     args = argument_parser()
     make = Build(args.user)
     try:

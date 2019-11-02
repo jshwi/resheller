@@ -1,8 +1,10 @@
-from lib.title import Title
+#!/usr/bin/env python3
+"""resheller.server.main"""
+from lib.stdout import Title
 from server.server import Server
 
 
-def main():
+def main() -> None:
     title = Title()
     server = Server()
     title.clear_screen()

@@ -1,12 +1,14 @@
 #!/usr/bin/env python3
+"""resheller.ps1"""
 from os import path
 
-from lib.colors import color
+from lib.pipe import SafeSocket
+from lib.stdout import color
 
 
 class Ps1:
 
-    def __init__(self, sock):
+    def __init__(self, sock: SafeSocket) -> None:
         self.sock = sock
         self.windows = sock.callback("get_os")
         self.req = "pwd"
@@ -16,30 +18,32 @@ class Ps1:
         self.usr = self.get_username()
         self.host = self.get_hostname()
 
-    def get_hostname(self):
+    def get_hostname(self) -> str:
         host = self.sock.callback("hostname")
         if self.windows:
             return host[:-2]
         return host[:-1]
 
-    def format_os(self):
+    def format_os(self) -> None:
         if self.windows:
             self.req = "cd"
             self.sep = "\\"
             self.chop = 2
 
-    def get_username(self):
+    def get_username(self) -> str:
         usr = self.sock.callback("whoami")
         if self.windows:
             return usr.split("\\")[1][:-2]
         return usr[:-1]
 
-    def independent_path(self, *args):
+    def independent_path(self, *args) -> str:
         if self.windows:
             return path.join(*args).replace("/", "\\")
         return path.join(*args)
 
-    def resolve_path(self, root, del_, dirs, path_):
+    def resolve_path(
+            self, root: bool, del_: int, dirs: list, path_: str
+    ) -> str:
         other_path = False
         home = path_ + self.sep
         if len(dirs) == 1:
@@ -62,7 +66,7 @@ class Ps1:
                 path_ = self.independent_path(path_, "..")
             return self.independent_path(path_, base)
 
-    def get_path(self):
+    def get_path(self) -> str:
         path_ = "~"
         stdout = self.sock.callback(self.req)
         dirs = stdout.split(self.sep)
@@ -78,7 +82,7 @@ class Ps1:
                 path_ = self.sep
         return self.resolve_path(root, del_, dirs, path_)
 
-    def prompt(self):
+    def prompt(self) -> str:
         path_ = self.get_path()
         ps1 = (
             f'{color.b_blue.get("{")}{color.b_red.get(self.usr)}'

