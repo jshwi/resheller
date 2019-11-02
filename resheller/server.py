@@ -6,7 +6,11 @@ __version__ = "1.0.0"
 __maintainer__ = "Stephen Whitlock"
 __email__ = "stephen@jshwisolutions.com"
 __status__ = "Production"
-from resheller.client.main import main
+from src.server.main import main
+import sys
+
+
+sys.path.append('resheller/src')
 
 
 if __name__ == '__main__':
