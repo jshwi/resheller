@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """resheller.server.main"""
-from lib.stdout import Title
-from server.server import Server
+from resheller.lib.stdout import Title
+from resheller.src.server.server import Server
 
 
 def main() -> None:

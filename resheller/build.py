@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
+"""build:main"""
 import sys
 
-from resheller.src.client.main import main
+from src.build.main import main
 
 if __name__ == "__main__":
     try:

@@ -6,12 +6,13 @@ __version__ = "1.0.0"
 __maintainer__ = "Stephen Whitlock"
 __email__ = "stephen@jshwisolutions.com"
 __status__ = "Production"
-from resheller.lib.build import main
 import sys
 
+from src.server.main import main
 
-sys.path.append('resheller/src')
 
-
-if __name__ == '__main__':
-    main()
+if __name__ == "__main__":
+    try:
+        main()
+    except KeyboardInterrupt:
+        sys.exit(0)

@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
+"""resheller.src.client.ip"""
+
+
 def get_ip():
-
-
-    return "192.168.11.114"
+    return "Enter target IP here"

