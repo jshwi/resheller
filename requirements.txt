@@ -1,3 +1,4 @@
+pytest
 mss==4.0.3
 object-colors==1.0.3
 PyInstaller==3.5

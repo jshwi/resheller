@@ -10,7 +10,7 @@ from textwrap import wrap
 
 from root_finder import get_project_root
 
-from lib.stdout import color
+from resheller.lib.stdout import color
 
 
 class Build:
@@ -213,10 +213,6 @@ class Build:
 def argument_parser() -> Namespace:
     parser = ArgumentParser()
     parser.add_argument(
-        "build",
-        help="build the reverse-shell client",
-    )
-    parser.add_argument(
         "-d",
         "--dummy",
         help="test with this",
@@ -255,7 +251,6 @@ def main() -> None:
     args = argument_parser()
     make = Build(args.user)
     try:
-        assert args.build == "build"
         if args.reinstall:
             make.reinstall()
         elif args.clean:

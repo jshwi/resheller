@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 from pytest import fixture
 
-from src.client.build import Build
+from lib.build import Build
 
 
 @fixture
