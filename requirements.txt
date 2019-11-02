@@ -3,3 +3,4 @@ object-colors==1.0.3
 PyInstaller==3.5
 pynput==1.4.4
 requests==2.22.0
+root-finder==1.0.1

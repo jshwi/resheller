@@ -1,17 +1,8 @@
-from sys import argv
-
-
-def build():
-    try:
-        assert argv[1]
-        install()
-        exit(0)
-    except IndexError:
-        pass
+from lib.title import Title
+from server.server import Server
 
 
 def main():
-    build()
     title = Title()
     server = Server()
     title.clear_screen()

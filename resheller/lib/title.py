@@ -1,8 +1,7 @@
-#!/usr/bin/env python3
 from os import name
 from subprocess import call
 
-from src.stdout.colors import color
+from lib.colors import color
 
 
 class Title:

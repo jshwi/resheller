@@ -4,9 +4,9 @@ from os import path
 from pathlib import Path
 from time import strftime
 
-from src.server.pipe import SafeSocket
-from src.shell.ps1 import Ps1
-from src.stdout.colors import color
+from lib.pipe import SafeSocket
+from server.ps1 import Ps1
+from lib.colors import color
 
 
 class Shell:

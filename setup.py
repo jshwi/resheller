@@ -30,13 +30,14 @@ setup(
         "pynput==1.4.2",
         "requests==2.22.0",
         "PyInstaller==3.5",
+        "root-finder==1.0.1"
     ],
     include_package_data=True,
     entry_points={
         "console_scripts": [
-            "server=server.__main__:main",
-            "client=client.__main__:main",
+            "server=bin.server",
+            "client=bin.client",
+            "build=bin.build",
         ],
     },
-
 )

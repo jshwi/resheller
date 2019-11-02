@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 from os import path
 
-from src.stdout.colors import color
+from lib.colors import color
 
 
 class Ps1:

@@ -8,6 +8,8 @@ from shutil import copyfile, rmtree
 from subprocess import Popen, PIPE, STDOUT
 from textwrap import wrap
 
+from root_finder import get_project_root
+
 from lib.colors import color
 
 
@@ -19,7 +21,7 @@ class Build:
         self.executed = False
         self.install = True
         self.venv = hasattr(sys, 'real_prefix')
-        self.repo = path.dirname(path.abspath(f"{__file__}/../../../"))
+        self.repo = get_project_root("resheller")
         self.client = "client.exe" if name == "nt" else "client"
         self.conf_ini = path.join(self.repo, 'config.ini')
         self.package = path.join(self.repo, "resheller")
@@ -249,7 +251,7 @@ def usage():
     print(parser.print_help())
 
 
-def install():
+def main():
     args = argument_parser()
     make = Build(args.user)
     try:

@@ -3,10 +3,10 @@ from socket import AF_INET, SOCK_STREAM, SOL_SOCKET, SO_REUSEADDR, SOCK_DGRAM
 from socket import socket
 from threading import Thread
 
-from src.shell.shell import Shell
-from src.stdout.colors import color
-from src.stdout.output import usage
-from src.stdout.title import Title
+from server.shell import Shell
+from lib.colors import color
+from lib.output import usage
+from lib.title import Title
 
 
 class Server:
