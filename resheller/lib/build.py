@@ -3,7 +3,7 @@ from argparse import ArgumentParser, Namespace
 from configparser import ConfigParser
 from importlib import import_module
 from ipaddress import IPv4Address
-from os import path, name, getcwd, remove
+from os import path, name, getcwd, remove, rename
 from shutil import copyfile, rmtree
 from subprocess import Popen, PIPE, STDOUT
 from textwrap import wrap
@@ -25,7 +25,7 @@ class Build:
         self.client = "client.exe" if name == "nt" else "client"
         self.conf_ini = path.join(self.repo, 'config.ini')
         self.package = path.join(self.repo, "resheller")
-        self.client_dir = path.join(self.package, "src", "client")
+        self.client_dir = path.join(self.package, "client")
         self.client_exe = path.join(self.repo, "dist", self.client)
         self.requirements = self.get_reqs()
 
@@ -52,7 +52,7 @@ class Build:
                     return
                 elif "You are using pip version" in row:
                     self.run_pip(["install", "--upgrade", "pip"])
-                print(f"    {row}")
+                print(f"  {row}")
                 self.executed = True
 
     def get_reqs(self) -> list:
@@ -67,20 +67,20 @@ class Build:
             try:
                 module = import_module(line.split("=")[0])
                 module = wrap(module.__file__, 71)
-                print(f"      {color.b_grn.get('*')}  {module.pop(0)}")
+                print(f"    {color.b_grn.get('*')}  {module.pop(0)}")
                 for row in module:
-                    print(f"           {row}")
+                    print(f"         {row}")
             except ImportError:
                 pass
 
     def resolve_user(self) -> None:
         if self.user and self.venv:
-            color.ylw.print("    Cannot install requirements as --user")
-            color.ylw.print("    Virtual environment is active")
+            color.ylw.print("  Cannot install requirements as --user")
+            color.ylw.print("  Virtual environment is active")
         elif not self.install:
-            color.ylw.print("    Uninstall does not take the --user flag")
-            color.ylw.print("    Try manually removing installations")
-            color.ylw.print("    They may be in the following location(s)")
+            color.ylw.print("  Uninstall does not take the --user flag")
+            color.ylw.print("  Try manually removing installations")
+            color.ylw.print("  They may be in the following location(s)")
             self.read_package_path()
         else:
             return
@@ -102,7 +102,7 @@ class Build:
         def_ini = path.join(self.package, "lib", 'default.ini')
         copyfile(def_ini, self.conf_ini)
         color.grn.print("Initiated config.ini:")
-        color.ylw.print("    Enter target's IP in config then run build.py")
+        color.ylw.print("  Enter target's IP in config then run ./install")
         exit(0)
 
     def get_ip(self) -> None:
@@ -114,25 +114,31 @@ class Build:
             IPv4Address(ipv4.strip('"'))
         except ValueError as err:
             if "Enter target IP here" in ipv4:
-                prompt = "    Enter target's IP in the config file (config.ini)"
+                prompt = "  Enter target's IP in the config file (config.ini)"
                 color.red.print(prompt)
             else:
-                color.b_red.print("    Not a valid IPv4 Address:")
-                color.b_red.print(f"    {err}")
+                color.b_red.print("  Not a valid IPv4 Address:")
+                color.b_red.print(f"  {err}")
             exit(0)
         self.write_ip_file(ipv4)
 
     def make_exe(self) -> None:
-        client_py = path.join(self.client_dir, "client.py")
+        client = path.join(self.repo, "resheller", "client", "client")
         if path.isfile(self.client_exe):
-            color.ylw.print("    Resheller already installed\n")
+            color.ylw.print("  Resheller already installed\n")
             print("Hint: Run build.py -r to reinstall")
         else:
-            cmd = ["pyinstaller", "--onefile", "--noconsole", client_py]
+            cmd = ["pyinstaller", "--onefile", "--noconsole", client]
             self.run_command(cmd)
-            color.ylw.print("    Installation Successful").ylw()
+            color.ylw.print("  Installation Successful")
             print()
-            color.ylw.print(f"Find {self.client} in ./dist")
+            self.separate_exe()
+
+    def separate_exe(self):
+        client_src = path.join("dist", self.client)
+        rename(client_src, self.client)
+        sys.stdout = open(path.devnull, "w")
+        self.clean()
 
     def install_requirements(self, install_reqs: bool = True) -> None:
         color.b_grn.print("[Install]")
@@ -141,9 +147,9 @@ class Build:
                 color.grn.print("Installing package requirements:")
                 self.manage_requirements()
                 if self.executed:
-                    color.ylw.print("    Package requirements satisfied\n")
+                    color.ylw.print("  Package requirements satisfied\n")
                 else:
-                    color.ylw.print("    Requirements already installed\n")
+                    color.ylw.print("  Requirements already installed\n")
             self.make_config()
         self.get_ip()
         color.grn.print("Installing package:")
@@ -154,7 +160,7 @@ class Build:
         for item in ["build", "dist", self.conf_ini, "client.spec"]:
             try:
                 remove(item)
-                color.ylw.print(f"    {path.basename(item)}")
+                color.ylw.print(f"  {path.basename(item)}")
                 items.append(path.basename(item))
             except PermissionError as err:
                 if item == "dist":
@@ -162,10 +168,11 @@ class Build:
                     print(f'Hint: Try looking for "{self.client}" '
                           f'in your running processes')
                     exit(0)
+            except IsADirectoryError:
                 rmtree(item)
             except FileNotFoundError:
                 continue
-            color.ylw.print(f"    {path.basename(item)}")
+            color.ylw.print(f"  {path.basename(item)}")
             items.append(path.basename(item))
         if len(items) > 1:
             items.insert(len(items[:-1]), "and")
@@ -179,18 +186,18 @@ class Build:
             print(self.executed)
             self.manage_requirements()
             if self.executed:
-                color.ylw.print("    Package requirements removed\n")
+                color.ylw.print("  Package requirements removed\n")
             else:
-                color.ylw.print("    No requirements to uninstall\n")
+                color.ylw.print("  No requirements to uninstall\n")
         color.grn.print("Removing:")
         items = self.rm_build()
         if items:
             confirm = ''.join([str(f'{item}, ') for item in items])
             confirm = confirm.replace(", and,", " and")
             color.grn.print("Removed:")
-            color.ylw.print(f"    {confirm[:-2]}")
+            color.ylw.print(f"  {confirm[:-2]}")
         else:
-            color.ylw.print("    Nothing to Remove")
+            color.ylw.print("  Nothing to Remove")
         self.write_ip_file('"Enter target IP here"')
 
     def reinstall(self) -> None:
@@ -207,7 +214,7 @@ class Build:
             self.install = True
             self.install_requirements(install_reqs)
         else:
-            color.ylw.print("    Package is not installed")
+            color.ylw.print("  Package is not installed")
 
 
 def argument_parser() -> Namespace:
