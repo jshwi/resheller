@@ -1,12 +1,15 @@
 #!/usr/bin/env python3
-"""resheller.ps1"""
+"""ps1"""
 from os import path
+from typing import Union
 
 from resheller.lib.pipe import SafeSocket
-from resheller.lib.stdout import color
+from resheller.lib.stdout import COLOR
 
 
 class Ps1:
+    """The prompt that will be returned from the client based on target
+    machine's os i.e. Windows/Unix-Based"""
 
     def __init__(self, sock: SafeSocket) -> None:
         self.sock = sock
@@ -19,31 +22,56 @@ class Ps1:
         self.host = self.get_hostname()
 
     def get_hostname(self) -> str:
+        """Get hostname of target machine
+
+        :return: The target's hostname
+        """
         host = self.sock.callback("hostname")
         if self.windows:
             return host[:-2]
         return host[:-1]
 
     def format_os(self) -> None:
+        """Tailor certain items for the host machine"""
         if self.windows:
             self.req = "cd"
             self.sep = "\\"
             self.chop = 2
 
     def get_username(self) -> str:
+        """Get the username of the target
+
+        :return: The target's username
+        """
         usr = self.sock.callback("whoami")
         if self.windows:
             return usr.split("\\")[1][:-2]
         return usr[:-1]
 
     def independent_path(self, *args) -> str:
+        """Return path based on the target machine
+
+        :param args:    directories
+        :return:        The complete path
+        """
+        path_ = path.join(*args)
         if self.windows:
-            return path.join(*args).replace("/", "\\")
-        return path.join(*args)
+            return path_.replace("/", "\\")
+        return path_
 
     def resolve_path(
-            self, root: bool, del_: int, dirs: list, path_: str
-    ) -> str:
+        self, root: bool, del_: int, dirs: list, path_: str
+    ) -> Union[str, None]:
+        """Get a shorthand version of a long path
+
+        :param root:    Boolean depending on whether the user is in root
+        :param del_:    How many directories need to be "deleted" to
+                        convert $HOME into ~/
+        :param dirs:    List of directories in the path
+        :param path_:   The real version of the path i.e.
+                        /home/user/this/is/a/path
+        :return:        The altered path i.e. ~/../../../path
+        """
         other_path = False
         home = path_ + self.sep
         if len(dirs) == 1:
@@ -65,12 +93,17 @@ class Ps1:
             for _ in dirs:
                 path_ = self.independent_path(path_, "..")
             return self.independent_path(path_, base)
+        return
 
     def get_path(self) -> str:
+        """Get the path the server is in from the target machine
+
+        :return: The path to display on the server's prompt
+        """
         path_ = "~"
         stdout = self.sock.callback(self.req)
         dirs = stdout.split(self.sep)
-        dirs[-1] = dirs[-1][:-self.chop]
+        dirs[-1] = dirs[-1][: -self.chop]
         if dirs[1] == self.usr:
             root, del_ = True, 2
         else:
@@ -83,11 +116,14 @@ class Ps1:
         return self.resolve_path(root, del_, dirs, path_)
 
     def prompt(self) -> str:
-        path_ = self.get_path()
+        """The final item to be printed
+
+        :return: The altered prompt or the stdout from a command
+        """
         ps1 = (
-            f'{color.b_blue.get("{")}{color.b_red.get(self.usr)}'
-            f'{color.b_blue.get("@")}{color.b_red.get(self.host)}:'
-            f'{color.b_grn.get(path_)}{color.b_blue.get("}>")} '
+            f'{COLOR.b_blu.get("{")}{COLOR.b_red.get(self.usr)}'
+            f'{COLOR.b_blu.get("@")}{COLOR.b_red.get(self.host)}:'
+            f'{COLOR.b_grn.get(self.get_path())}{COLOR.b_blu.get("}>")} '
         )
         cmd = input(ps1)
         if cmd == "cd" and len(cmd) == 2:

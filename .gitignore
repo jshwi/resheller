@@ -1,10 +1,10 @@
 /build/
-client
+/client
 client.exe
 /dist/
 *.egg*
-/.idea/
+.idea/
 .pre-commit-config.yaml
-**/__pycache__/
+__pycache__/
 pyproject.toml
-/venv/
+venv/

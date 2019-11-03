@@ -1,10 +1,12 @@
-.PHONY: bin color config install.py Makefile README.md vim zsh help
 .SILENT:
 .ONEFILE:
+.PHONY: LICENSE Makefile pyproject.toml README.md requirements.txt resheller \
+server.py setup.py venv
 
 REPO="$(shell pwd)"
 PACKAGE="${REPO}"/resheller
 BUILD="${PACKAGE}"/build.py
+CLEAN="${PACKAGE}"/clean.py
 PYTHON=python3
 
 default:
@@ -14,19 +16,15 @@ default:
 build:
 	@"${PYTHON}" "${BUILD}"
 
+verbose:
+	@"${PYTHON}" "${BUILD}" --verbose
+
+install:
+	@ "${PYTHON}" setup.py install
+	@make default
+
 clean:
-	rm -rf build
-	rm -rf dist
-	find . -name "pip-wheel-metadata" -exec rm -rf {} +
-	find . -name "htmlcov" -exec rm -rf {} +
-	find . -name "*.spec" -exec rm -rf {} +
-	find . -name ".coverage" -exec rm -rf {} +
-	find . -name "*.egg-info" -exec rm -rf {} +
-	find . -name "*.egg" -exec rm -rf {} +
-	find . -name "*.pyc" -exec rm -rf {} +
-	find . -name "*.pyo" -exec rm -rf {} +
-	find . -name "*~" -exec rm -rf {} +
-	find . -name "__pycache__" -exec rm -rf {} +
+	@"${PYTHON}" "${CLEAN}"
 
 help:
 	@echo "\033[1;33m- Usage:\033[0;0m"

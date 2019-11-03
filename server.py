@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+"""server"""
 __author__ = "Stephen Whitlock"
 __copyright__ = "Copyright 2019, Jshwi Solutions"
 __license__ = "MIT"
@@ -8,7 +9,7 @@ __email__ = "stephen@jshwisolutions.com"
 __status__ = "Production"
 import sys
 
-from src.server.main import main
+from resheller.src.server.main import main
 
 
 if __name__ == "__main__":

@@ -1,25 +1,33 @@
 #!/usr/bin/env python3
+"""resheller.src.build.main"""
 import sys
 from os import path, remove
 
-from lib.stdout import color
+from lib.stdout import COLOR
 from src.build.build import Build
+from src.build.parser import parser
 
 
 def main() -> None:
-    color.b_grn.print("[Building]")
-    build = Build()
-    if not path.isfile(build.conf_ini):
+    """Run the build process initiated by build.py or Makefile"""
+    args = parser()
+    COLOR.b_grn.print("[Building]")
+    build = Build(args)
+    if not path.isfile(build.config):
         build.make_config()
-        color.grn.print("Initiated config.ini")
-        color.ylw.print("Enter target's IP in config then run make again")
+        COLOR.grn.print("Initiated config.ini")
+        COLOR.ylw.print("Enter target's IP in config then run make again")
         sys.exit(0)
     ipv4 = build.parse_config()
-    build.verify_ipv4(ipv4)
-    build.write_ip_file(ipv4)
-    color.grn.print("Building Package:")
-    build.make_exe()
-    color.ylw.print("Build complete\n")
+    if not build.verify_ipv4(ipv4):
+        sys.exit(1)
+    build.write_ip_py(ipv4)
+    COLOR.grn.print("Building Package")
+    if build.make_exe():
+        COLOR.b_red.print("Error building client")
+        sys.exit(1)
+    else:
+        COLOR.b_grn.print("Build successful\n")
     build.move_client()
-    remove(build.conf_ini)
-    build.write_ip_file('"Enter target IP here"')
+    remove(build.config)
+    build.write_ip_py('"Enter target IP here"')

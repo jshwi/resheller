@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+"""client"""
 import sys
 
 from resheller.src.client.main import main

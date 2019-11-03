@@ -5,6 +5,7 @@ from resheller.src.server.server import Server
 
 
 def main() -> None:
+    """Initiate the server"""
     title = Title()
     server = Server()
     title.clear_screen()

