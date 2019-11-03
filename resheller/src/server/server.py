@@ -4,8 +4,8 @@ from socket import AF_INET, SOCK_STREAM, SOL_SOCKET, SO_REUSEADDR, SOCK_DGRAM
 from socket import socket
 from threading import Thread
 
-from resheller.lib.stdout import usage, COLOR, Title
-from resheller.src.server.shell import Shell
+from lib.stdout import usage, COLOR, Title
+from src.server.shell import Shell
 
 
 class Server:
@@ -97,3 +97,15 @@ class Server:
                 self.clients += 1
             except OSError:
                 pass
+
+
+def main() -> None:
+    """Initiate the server"""
+    title = Title()
+    server = Server()
+    title.clear_screen()
+    title.resheller()
+    server.sock_object()
+    server.thread()
+    title.header()
+    server.control_centre()

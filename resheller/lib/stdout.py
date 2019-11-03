@@ -5,7 +5,6 @@ from subprocess import call
 
 from object_colors import Color
 
-
 COLOR = Color(
     ylw={"text": "yellow"},
     grn={"text": "green"},

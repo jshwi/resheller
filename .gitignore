@@ -7,4 +7,6 @@ client.exe
 .pre-commit-config.yaml
 __pycache__/
 pyproject.toml
+.venv
 venv/
+.vscode/

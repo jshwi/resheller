@@ -5,9 +5,9 @@ from os import path
 from pathlib import Path
 from time import strftime
 
-from resheller.lib.pipe import SafeSocket
-from resheller.lib.stdout import COLOR
-from resheller.src.server.ps1 import Ps1
+from lib.pipe import SafeSocket
+from lib.stdout import COLOR
+from src.server.ps1 import Ps1
 
 
 class Shell:

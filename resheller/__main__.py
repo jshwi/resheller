@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-"""client"""
+"""resheller"""
 import sys
 
-from resheller.src.client.main import main
+from src.main import main
 
 if __name__ == "__main__":
     try:

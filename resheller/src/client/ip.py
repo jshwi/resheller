@@ -3,5 +3,5 @@
 
 
 def get_ip():
-    """This IP will be compiled into client executable"""
+    """This IP will be compiled into executable"""
     return "Enter target IP here"
