@@ -24,8 +24,9 @@ def usage(session: bool = False, keylogger: bool = False) -> str:
     """
     if session:
         stdout = (
-            "targets          --> view available targets\n"
-            "session <number> --> select target by index\n"
+            "{[**]} targets          --> view available targets\n"
+            "{[**]} session <number> --> select target by index\n"
+            "{[**]}"
         )
 
     elif not session and keylogger:
@@ -45,7 +46,7 @@ def usage(session: bool = False, keylogger: bool = False) -> str:
             "                    <dump>  --> retrieve logs from target\n"
             "quit            --> exit reverse shell\n"
         )
-    return f"[*] Usage:\n\n{stdout}"
+    return "{[**]} Usage:\n{[**]}\n" + stdout
 
 
 class Title:

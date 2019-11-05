@@ -70,8 +70,10 @@ class Server:
             if cmd[:7] in ("targets", "command") and (
                 not self.targets or not self.ips
             ):
-                COLOR.b_red.print("[!] No Targets Found.")
-                COLOR.ylw.print("[*] Is a Reverse Shell Running?\n")
+                icon = COLOR.b_red.get("{[!!]}")
+                text = COLOR.red.get("No Targets Found.")
+                print(f"{icon} {text}")
+                COLOR.ylw.print("{[**]} Is a Reverse Shell Running?")
                 continue
             if cmd == "targets":
                 self.show_targets()
