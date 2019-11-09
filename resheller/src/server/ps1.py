@@ -120,11 +120,10 @@ class Ps1:
 
         :return: The altered prompt or the stdout from a command
         """
-        ps1 = (
-            f'{COLOR.b_blu.get("{")}{COLOR.b_red.get(self.usr)}'
-            f'{COLOR.b_blu.get("@")}{COLOR.b_red.get(self.host)}:'
-            f'{COLOR.b_grn.get(self.get_path())}{COLOR.b_blu.get("}>")} '
-        )
+        curl, at, end = COLOR.b_blu.get("{", "@", "}>")
+        usr, host = COLOR.b_red.get(self.usr, self.host)
+        path_ = COLOR.b_grn.get(self.get_path())
+        ps1 = f"{curl}{usr}{at}{host}{path_}"
         cmd = input(ps1)
         if cmd == "cd" and len(cmd) == 2:
             return "cd ~"
